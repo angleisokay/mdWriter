@@ -1,516 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang=en>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown Editor</title>
-    <!-- Font Awesome for icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global Firebase instances and user ID (will be populated on auth state change)
-        let app_firebase, db_firestore, auth_firebase;
-        let currentUserId = null;
-        // __app_id and __firebase_config are provided by the Canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-markdown-editor-app';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-
-        // Main application class for the Markdown Editor
-        class LiveMarkdownEditor {
-            constructor() {
-                this.currentDraftId = null;
-                this.autoSaveTimer = null;
-                this.drafts = []; // Local cache of drafts, updated by Firestore listener
-
-                this.initElements();
-                this.bindEvents();
-                this.initializeFirebase(); // Initialize Firebase and authentication
-            }
-
-            // Initializes DOM elements
-            initElements() {
-                this.editor = document.getElementById('editor');
-                this.optionsPanel = document.getElementById('optionsPanel');
-                this.draftsList = document.getElementById('draftsList');
-                this.draftTitle = document.getElementById('draftTitle');
-                this.zoomSlider = document.getElementById('zoomSlider');
-                this.zoomValue = document.getElementById('zoomValue');
-                this.optionsBtn = document.getElementById('optionsBtn');
-                this.userIdDisplay = document.getElementById('userIdDisplay'); // Element to display User ID
-
-                this.formattingToolbar = document.getElementById('formattingToolbar');
-                this.formatButtons = this.formattingToolbar.querySelectorAll('button[data-format]');
-
-                this.confirmationModal = document.getElementById('confirmationModal');
-                this.modalMessage = document.getElementById('modalMessage');
-                this.modalConfirmBtn = document.getElementById('modalConfirmBtn');
-                this.modalCancelBtn = document.getElementById('modalCancelBtn');
-            }
-
-            // Sets up event listeners for UI interactions
-            bindEvents() {
-                this.optionsBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const isPanelOpen = this.optionsPanel.classList.toggle('open');
-                    this.optionsBtn.innerHTML = isPanelOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-cog"></i>';
-                });
-
-                this.zoomSlider.addEventListener('input', (e) => {
-                    const zoom = e.target.value;
-                    this.editor.style.fontSize = `${zoom / 100 * 16}px`;
-                    this.zoomValue.textContent = `${zoom}%`;
-                });
-
-                document.getElementById('newDraft').addEventListener('click', () => {
-                    this.createNewDraft();
-                });
-
-                this.editor.addEventListener('input', () => {
-                    this.scheduleAutoSave();
-                });
-
-                this.editor.addEventListener('mouseup', this.handleSelectionChange.bind(this));
-                this.editor.addEventListener('keyup', this.handleSelectionChange.bind(this));
-                document.addEventListener('mousedown', (e) => {
-                    if (!this.formattingToolbar.contains(e.target) && !this.editor.contains(e.target)) {
-                        this.hideToolbar();
-                    }
-                });
-
-                this.draftTitle.addEventListener('input', () => {
-                    this.scheduleAutoSave();
-                });
-
-                document.addEventListener('click', (e) => {
-                    if (!this.optionsPanel.contains(e.target) && !this.optionsBtn.contains(e.target)) {
-                        this.optionsPanel.classList.remove('open');
-                        this.optionsBtn.innerHTML = '<i class="fas fa-cog"></i>';
-                    }
-                });
-
-                this.formatButtons.forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const format = e.currentTarget.dataset.format;
-                        this.applyFormat(format);
-                        this.hideToolbar();
-                    });
-                });
-
-                this.editor.addEventListener('keydown', (e) => {
-                    if (e.ctrlKey || e.metaKey) {
-                        if (e.key === 'b' || e.key === 'i' || e.key === 'u' || e.key === '`') {
-                            e.preventDefault();
-                        }
-                    }
-                });
-            }
-
-            // Initializes Firebase and handles authentication
-            async initializeFirebase() {
-                if (!Object.keys(firebaseConfig).length) {
-                    console.error("bro, firebase config is missing. can't connect to the cloud. 😭");
-                    return;
-                }
-                app_firebase = initializeApp(firebaseConfig);
-                db_firestore = getFirestore(app_firebase);
-                auth_firebase = getAuth(app_firebase);
-
-                // Listen for auth state changes
-                onAuthStateChanged(auth_firebase, async (user) => {
-                    if (user) {
-                        currentUserId = user.uid;
-                    } else {
-                        // Sign in anonymously if no user is authenticated or custom token is not provided
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            try {
-                                await signInWithCustomToken(auth_firebase, __initial_auth_token);
-                                currentUserId = auth_firebase.currentUser.uid;
-                            } catch (error) {
-                                console.error("bruh, error signing in with custom token:", error);
-                                // Fallback to anonymous sign-in if custom token fails
-                                await signInAnonymously(auth_firebase);
-                                currentUserId = auth_firebase.currentUser.uid;
-                            }
-                        } else {
-                            // If no custom token, sign in anonymously
-                            await signInAnonymously(auth_firebase);
-                            currentUserId = auth_firebase.currentUser.uid;
-                        }
-                    }
-                    console.log("logged in with userId:", currentUserId);
-                    this.displayUserId(); // Update UI with user ID
-                    this.setupFirestoreListeners(); // Set up Firestore listeners once auth is ready
-                });
-            }
-
-            // Displays the current user ID in the UI
-            displayUserId() {
-                if (this.userIdDisplay && currentUserId) {
-                    this.userIdDisplay.textContent = `User ID: ${currentUserId}`;
-                    this.userIdDisplay.style.display = 'block';
-                }
-            }
-
-            // Sets up real-time listeners for drafts from Firestore
-            setupFirestoreListeners() {
-                if (!db_firestore || !currentUserId) {
-                    console.warn("Firestore or User ID not ready yet for listeners.");
-                    return;
-                }
-                // Path: /artifacts/{appId}/users/{userId}/drafts
-                const draftsCollectionRef = collection(db_firestore, `artifacts/${appId}/users/${currentUserId}/drafts`);
-                onSnapshot(draftsCollectionRef, (snapshot) => {
-                    this.drafts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    this.drafts.sort((a, b) => b.updatedAt.toDate().getTime() - a.updatedAt.toDate().getTime()); // Sort by updatedAt descending
-                    this.renderDrafts();
-                    // If no current draft or current draft was deleted, load the first one or create new
-                    if (!this.currentDraftId || !this.drafts.some(d => d.id === this.currentDraftId)) {
-                        if (this.drafts.length > 0) {
-                            this.loadDraft(this.drafts[0].id);
-                        } else {
-                            this.createNewDraft(true); // Create new if no drafts exist after initial load
-                        }
-                    }
-                }, (error) => {
-                    console.error("Error fetching drafts:", error);
-                });
-            }
-
-            // Handles selection changes to show/hide and position the formatting toolbar
-            handleSelectionChange() {
-                const selection = window.getSelection();
-                if (!selection.isCollapsed && this.editor.contains(selection.focusNode) && this.editor.contains(selection.anchorNode)) {
-                    const range = selection.getRangeAt(0);
-                    const rect = range.getBoundingClientRect();
-                    
-                    let toolbarTop = rect.top + window.scrollY - this.formattingToolbar.offsetHeight - 10;
-                    let toolbarLeft = rect.left + window.scrollX + (rect.width / 2) - (this.formattingToolbar.offsetWidth / 2);
-
-                    if (toolbarTop < window.scrollY + 10) {
-                        toolbarTop = rect.bottom + window.scrollY + 10;
-                    }
-
-                    if (toolbarLeft < window.scrollX + 10) {
-                        toolbarLeft = window.scrollX + 10;
-                    }
-                    if (toolbarLeft + this.formattingToolbar.offsetWidth > window.innerWidth - 10) {
-                        toolbarLeft = window.innerWidth - this.formattingToolbar.offsetWidth - 10;
-                    }
-
-                    this.formattingToolbar.style.display = 'flex';
-                    this.formattingToolbar.style.left = `${toolbarLeft}px`;
-                    this.formattingToolbar.style.top = `${toolbarTop}px`;
-                } else {
-                    this.hideToolbar();
-                }
-            }
-
-            // Hides the formatting toolbar
-            hideToolbar() {
-                this.formattingToolbar.style.display = 'none';
-            }
-
-            // Applies specified formatting to the current selection
-            applyFormat(command) {
-                this.editor.focus();
-                switch (command) {
-                    case 'bold': document.execCommand('bold', false, null); break;
-                    case 'italic': document.execCommand('italic', false, null); break;
-                    case 'h1': document.execCommand('formatBlock', false, '<h1>'); break;
-                    case 'h2': document.execCommand('formatBlock', false, '<h2>'); break;
-                    case 'blockquote': document.execCommand('formatBlock', false, '<blockquote>'); break;
-                    case 'code':
-                        const selection = window.getSelection();
-                        if (!selection.rangeCount) break;
-                        const range = selection.getRangeAt(0);
-                        const isAlreadyPre = range.commonAncestorContainer.closest('pre');
-
-                        if (isAlreadyPre) {
-                            document.execCommand('formatBlock', false, 'p');
-                            const parentCode = range.commonAncestorContainer.closest('code');
-                            if (parentCode && parentCode.parentNode === isAlreadyPre) {
-                                const fragment = document.createDocumentFragment();
-                                while(parentCode.firstChild) fragment.appendChild(parentCode.firstChild);
-                                parentCode.parentNode.replaceChild(fragment, parentCode);
-                            }
-                        } else {
-                            const originalContent = range.extractContents();
-                            const preElement = document.createElement('pre');
-                            const codeElement = document.createElement('code');
-                            codeElement.appendChild(originalContent);
-                            preElement.appendChild(codeElement);
-                            range.insertNode(preElement);
-                            range.selectNodeContents(codeElement);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                        }
-                        break;
-                    case 'link':
-                        const url = prompt('Enter the URL:', 'https://');
-                        if (url) document.execCommand('createLink', false, url);
-                        break;
-                    default: console.warn('Unknown format command:', command); break;
-                }
-                this.scheduleAutoSave();
-            }
-
-            // Places the cursor at the end of the editor content
-            placeCursorAtEnd() {
-                const selection = window.getSelection();
-                const range = document.createRange();
-                if (this.editor.lastChild) {
-                    if (this.editor.lastChild.nodeType === Node.TEXT_NODE) {
-                        range.setStart(this.editor.lastChild, this.editor.lastChild.textContent.length);
-                    } else {
-                        range.setStartAfter(this.editor.lastChild);
-                    }
-                } else {
-                    range.setStart(this.editor, 0);
-                }
-                range.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-
-            // Schedules auto-saving of the draft to Firestore
-            scheduleAutoSave() {
-                clearTimeout(this.autoSaveTimer);
-                this.autoSaveTimer = setTimeout(() => {
-                    this.saveDraft();
-                }, 1000);
-            }
-
-            // Creates a new empty draft in Firestore
-            async createNewDraft(isInitialLoad = false) {
-                if (!db_firestore || !currentUserId) {
-                    console.warn("Firestore or User ID not ready for creating draft.");
-                    return;
-                }
-                const newDraftRef = doc(collection(db_firestore, `artifacts/${appId}/users/${currentUserId}/drafts`));
-                const draftData = {
-                    title: '',
-                    content: '',
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                };
-                try {
-                    await setDoc(newDraftRef, draftData);
-                    this.currentDraftId = newDraftRef.id;
-                    this.draftTitle.value = '';
-                    this.editor.innerHTML = '';
-                    this.placeCursorAtEnd();
-                    if (!isInitialLoad) this.renderDrafts(); // Render if not initial load (onSnapshot will handle initial)
-                } catch (e) {
-                    console.error("Error adding document: ", e);
-                }
-            }
-
-            // Loads a specific draft into the editor from Firestore
-            loadDraft(id) {
-                const draft = this.drafts.find(d => d.id === id);
-                if (draft) {
-                    this.currentDraftId = id;
-                    this.draftTitle.value = draft.title;
-                    this.editor.innerHTML = draft.content;
-                    this.renderDrafts(); // Update active state in UI
-                    this.placeCursorAtEnd();
-                } else {
-                    console.warn("Draft not found locally:", id);
-                }
-            }
-
-            // Saves the current editor content to the active draft in Firestore
-            async saveDraft() {
-                if (!this.currentDraftId || !db_firestore || !currentUserId) return;
-                const draftRef = doc(db_firestore, `artifacts/${appId}/users/${currentUserId}/drafts`, this.currentDraftId);
-                const content = this.editor.innerHTML || '';
-                const textContent = this.editor.textContent || '';
-                const title = this.draftTitle.value || this.generateTitleFromContent(textContent);
-
-                try {
-                    await setDoc(draftRef, {
-                        title: title,
-                        content: content,
-                        updatedAt: new Date()
-                    }, { merge: true }); // Merge to only update specified fields
-                } catch (e) {
-                    console.error("Error saving document: ", e);
-                }
-            }
-
-            // Generates a title from the draft content if no custom title is provided
-            generateTitleFromContent(content) {
-                if (!content.trim()) return 'Untitled Draft';
-                const firstLine = content.split('\n')[0] || '';
-                return firstLine.substring(0, 20) + (firstLine.length > 20 ? '...' : '') || 'Untitled Draft';
-            }
-
-            // Shows a custom confirmation modal
-            showConfirmationModal(message) {
-                return new Promise((resolve) => {
-                    this.modalMessage.textContent = message;
-                    this.confirmationModal.style.display = 'flex';
-
-                    const confirmHandler = () => {
-                        this.confirmationModal.style.display = 'none';
-                        this.modalConfirmBtn.removeEventListener('click', confirmHandler);
-                        this.modalCancelBtn.removeEventListener('click', cancelHandler);
-                        resolve(true);
-                    };
-
-                    const cancelHandler = () => {
-                        this.confirmationModal.style.display = 'none';
-                        this.modalConfirmBtn.removeEventListener('click', confirmHandler);
-                        this.modalCancelBtn.removeEventListener('click', cancelHandler);
-                        resolve(false);
-                    };
-
-                    this.modalConfirmBtn.addEventListener('click', confirmHandler);
-                    this.modalCancelBtn.addEventListener('click', cancelHandler);
-                });
-            }
-
-            // Deletes a draft from Firestore after user confirmation
-            async deleteDraft(id) {
-                const confirmed = await this.showConfirmationModal('Are you sure you want to delete this draft?');
-                if (confirmed) {
-                    if (!db_firestore || !currentUserId) return;
-                    const draftRef = doc(db_firestore, `artifacts/${appId}/users/${currentUserId}/drafts`, id);
-                    try {
-                        await deleteDoc(draftRef);
-                    } catch (e) {
-                        console.error("Error deleting document: ", e);
-                    }
-                }
-            }
-
-            // Renders all drafts in the drafts list (called by Firestore onSnapshot)
-            renderDrafts() {
-                this.draftsList.innerHTML = '';
-                if (this.drafts.length === 0) {
-                    this.draftsList.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 2rem;">No drafts yet, fam! Create a new one.</div>';
-                    return;
-                }
-
-                this.drafts.forEach(draft => {
-                    const draftEl = document.createElement('div');
-                    draftEl.className = `draft-item ${draft.id === this.currentDraftId ? 'active' : ''}`;
-                    
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = draft.content;
-                    const textContent = tempDiv.textContent || tempDiv.innerText || '';
-                    
-                    const displayTitle = draft.title || this.generateTitleFromContent(textContent);
-                    const preview = textContent.substring(0, 50) + (textContent.length > 50 ? '...' : '');
-                    
-                    draftEl.innerHTML = `
-                        <div class="draft-title">${displayTitle}</div>
-                        <div class="draft-preview">${preview || 'Empty draft'}</div>
-                        <div class="draft-actions">
-                            <button class="draft-btn" data-action="load" data-id="${draft.id}">Open</button>
-                            <button class="draft-btn" data-action="delete" data-id="${draft.id}">Delete</button>
-                        </div>
-                    `;
-                    
-                    const loadBtn = draftEl.querySelector('[data-action="load"]');
-                    const deleteBtn = draftEl.querySelector('[data-action="delete"]');
-                    
-                    loadBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.loadDraft(e.target.dataset.id);
-                    });
-                    
-                    deleteBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.deleteDraft(e.target.dataset.id);
-                    });
-                    
-                    this.draftsList.appendChild(draftEl);
-                });
-            }
-        }
-
-        // Initialize the app when the DOM is fully loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            new LiveMarkdownEditor();
-        });
-    </script>
-    <style>
-        /* Minified CSS */
-        @font-face{font-family:'OpenDyslexic';src:url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Regular.otf') format('opentype');font-weight:normal;font-style:normal;}@font-face{font-family:'OpenDyslexic';src:url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Bold.otf') format('opentype');font-weight:bold;font-style:normal;}@font-face{font-family:'OpenDyslexic';src:url('./opendyslexic-0912/compiled/OpenDyslexic-Italic.otf') format('opentype');font-weight:normal;font-style:italic;}:root{--bg-primary:#0d1117;--bg-secondary:#161b22;--bg-tertiary:#21262d;--text-primary:#f0f6fc;--text-secondary:#7d8590;--accent:#58a6ff;--accent-hover:#388bfd;--border:#30363d;--success:#238636;--danger:#da3633;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'OpenDyslexic',Arial,sans-serif;background:var(--bg-primary);color:var(--text-primary);height:100vh;overflow:hidden;}.app-container{display:flex;height:100vh;position:relative;}.options-btn{position:fixed;top:20px;right:20px;z-index:1000;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:50%;cursor:pointer;font-size:16px;transition:all .2s;box-shadow:0 4px 12px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;}.options-btn:hover{background:var(--accent);border-color:var(--accent);}.options-panel{position:fixed;top:0;right:-400px;width:400px;height:100vh;background:var(--bg-secondary);border-left:1px solid var(--border);transition:right .3s ease;z-index:999;display:flex;flex-direction:column;box-shadow:-4px 0 12px rgba(0,0,0,.3);}.options-panel.open{right:0;}.options-header{padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}.options-content{flex:1;padding:20px;overflow-y:auto;}.option-group{margin-bottom:24px;}.option-label{display:block;margin-bottom:8px;font-weight:bold;color:var(--text-primary);}.option-control{width:100%;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:6px;font-family:'OpenDyslexic',Arial,sans-serif;font-size:14px;}.option-control:focus{outline:none;border-color:var(--accent);}.zoom-control{display:flex;align-items:center;gap:12px;}.zoom-slider{flex:1;accent-color:var(--accent);}.zoom-value{min-width:50px;text-align:center;font-weight:bold;}.drafts-section{flex:1;}.drafts-list{max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary);}.draft-item{padding:12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;}.draft-item:last-child{border-bottom:none;}.draft-item:hover{background:var(--bg-primary);}.draft-item.active{background:var(--accent);color:white;}.draft-title{font-weight:bold;margin-bottom:4px;}.draft-preview{font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.draft-item.active .draft-preview{color:rgba(255,255,255,.8);}.draft-actions{margin-top:8px;display:flex;gap:8px;}.draft-btn{background:var(--bg-primary);border:1px solid var(--border);color:var(--text-secondary);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:12px;}.draft-btn:hover{color:var(--text-primary);border-color:var(--accent);}.btn{background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:12px 16px;border-radius:6px;cursor:pointer;font-family:'OpenDyslexic',Arial,sans-serif;font-size:14px;transition:all .2s;}.btn:hover{background:var(--accent);border-color:var(--accent);}.btn.primary{background:var(--success);border-color:var(--success);}.btn.primary:hover{background:#2ea043;}.editor-container{flex:1;display:flex;flex-direction:column;}.editor-content{flex:1;background:var(--bg-primary);color:var(--text-primary);border:none;padding:40px;font-family:'OpenDyslexic',Arial,sans-serif;font-size:16px;line-height:1.6;outline:none;overflow-y:auto;min-height:100%;}.editor-content:empty::before{content:"Start typing here... Highlight text to format!";color:var(--text-secondary);font-style:italic;}.editor-content h1{font-size:2em;font-weight:bold;margin:.5em 0;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:.3em;display:block;}.editor-content h2{font-size:1.7em;font-weight:bold;margin:.5em 0;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:.2em;display:block;}.editor-content h3{font-size:1.4em;font-weight:bold;margin:.5em 0;color:var(--accent);display:block;}.editor-content h4{font-size:1.2em;font-weight:bold;margin:.5em 0;color:var(--accent);display:block;}.editor-content h5{font-size:1.1em;font-weight:bold;margin:.5em 0;color:var(--accent);display:block;}.editor-content h6{font-size:1em;font-weight:bold;margin:.5em 0;color:var(--accent);display:block;}.editor-content strong{font-weight:bold;color:var(--text-primary);}.editor-content em{font-style:italic;color:#ffa657;}.editor-content code{background:var(--bg-tertiary);padding:2px 6px;border-radius:4px;font-family:'Courier New',monospace;font-size:.9em;color:#f97583;}.editor-content blockquote{border-left:4px solid var(--accent);padding-left:16px;margin:1em 0;color:var(--text-secondary);font-style:italic;background:rgba(88,166,255,.05);padding:16px;border-radius:0 6px 6px 0;display:block;}.editor-content ul,.editor-content ol{padding-left:24px;margin:1em 0;}.editor-content li{margin:.5em 0;}.markdown-syntax{color:var(--text-secondary);font-size:.8em;}.modal{display:none;position:fixed;z-index:1001;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.6);justify-content:center;align-items:center;}.modal-content{background-color:var(--bg-secondary);margin:auto;padding:20px;border:1px solid var(--border);border-radius:8px;width:80%;max-width:400px;box-shadow:0 5px 15px rgba(0,0,0,.5);text-align:center;}.modal-content p{margin-bottom:20px;color:var(--text-primary);}.modal-buttons{display:flex;justify-content:space-around;gap:10px;}.modal-buttons button{flex:1;padding:10px 15px;border-radius:5px;cursor:pointer;font-family:'OpenDyslexic',Arial,sans-serif;font-size:14px;transition:background .2s;}.modal-buttons .confirm-btn{background-color:var(--danger);color:white;border:1px solid var(--danger);}.modal-buttons .confirm-btn:hover{background-color:#b32d2c;}.modal-buttons .cancel-btn{background-color:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);}.modal-buttons .cancel-btn:hover{background-color:var(--bg-primary);}.formatting-toolbar{display:none;position:absolute;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:1000;gap:5px;flex-wrap:wrap;}.formatting-toolbar button{background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:5px;cursor:pointer;font-size:14px;transition:background .2s,border-color .2s;}.formatting-toolbar button:hover{background:var(--accent);border-color:var(--accent);}@media (max-width:768px){.options-panel{width:100vw;right:-100vw;}.editor-content{padding:20px;font-size:14px;}.formatting-toolbar{flex-direction:row;flex-wrap:wrap;max-width:90vw;}}
-    </style>
+<meta charset=UTF-8>
+<meta name=viewport content="width=device-width, initial-scale=1.0">
+<title>Markdown Editor</title>
+<link href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css rel=stylesheet>
+<style>@font-face{font-family:'OpenDyslexic';src:url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Regular.otf') format('opentype');font-weight:normal;font-style:normal}@font-face{font-family:'OpenDyslexic';src:url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Bold.otf') format('opentype');font-weight:bold;font-style:normal}@font-face{font-family:'OpenDyslexic';src:url('./opendyslexic-0912/compiled/OpenDyslexic-Italic.otf') format('opentype');font-weight:normal;font-style:italic}:root{--bg-primary:#0d1117;--bg-secondary:#161b22;--bg-tertiary:#21262d;--text-primary:#f0f6fc;--text-secondary:#7d8590;--accent:#58a6ff;--accent-hover:#388bfd;--border:#30363d;--success:#238636;--danger:#da3633}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'OpenDyslexic',Arial,sans-serif;background:var(--bg-primary);color:var(--text-primary);height:100vh;overflow:hidden}.app-container{display:flex;height:100vh;position:relative}.options-btn{position:fixed;top:20px;right:20px;z-index:1000;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:50%;cursor:pointer;font-size:16px;transition:all .2s;box-shadow:0 4px 12px rgba(0,0,0,0.3)}.options-btn:hover{background:var(--accent);border-color:var(--accent)}.options-panel{position:fixed;top:0;right:-400px;width:400px;height:100vh;background:var(--bg-secondary);border-left:1px solid var(--border);transition:right .3s ease;z-index:999;display:flex;flex-direction:column;box-shadow:-4px 0 12px rgba(0,0,0,0.3)}.options-panel.open{right:0}.options-header{padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}.options-content{flex:1;padding:20px;overflow-y:auto}.option-group{margin-bottom:24px}.option-label{display:block;margin-bottom:8px;font-weight:bold;color:var(--text-primary)}.option-control{width:100%;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:6px;font-family:'OpenDyslexic',Arial,sans-serif;font-size:14px}.option-control:focus{outline:0;border-color:var(--accent)}.zoom-control{display:flex;align-items:center;gap:12px}.zoom-slider{flex:1;accent-color:var(--accent)}.zoom-value{min-width:50px;text-align:center;font-weight:bold}.drafts-section{flex:1}.drafts-list{max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary)}.draft-item{padding:12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s}.draft-item:last-child{border-bottom:0}.draft-item:hover{background:var(--bg-primary)}.draft-item.active{background:var(--accent);color:white}.draft-title{font-weight:bold;margin-bottom:4px}.draft-preview{font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.draft-item.active .draft-preview{color:rgba(255,255,255,0.8)}.draft-actions{margin-top:8px;display:flex;gap:8px}.draft-btn{background:var(--bg-primary);border:1px solid var(--border);color:var(--text-secondary);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:12px}.draft-btn:hover{color:var(--text-primary);border-color:var(--accent)}.btn{background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:12px 16px;border-radius:6px;cursor:pointer;font-family:'OpenDyslexic',Arial,sans-serif;font-size:14px;transition:all .2s}.btn:hover{background:var(--accent);border-color:var(--accent)}.btn.primary{background:var(--success);border-color:var(--success)}.btn.primary:hover{background:#2ea043}.editor-container{flex:1;display:flex;flex-direction:column}.editor-content{flex:1;background:var(--bg-primary);color:var(--text-primary);border:0;padding:40px;font-family:'OpenDyslexic',Arial,sans-serif;font-size:16px;line-height:1.6;outline:0;overflow-y:auto;min-height:100%}.editor-content:empty::before{content:"Start typing here... Highlight text to format!";color:var(--text-secondary);font-style:italic}.editor-content h1{font-size:2em;font-weight:bold;margin:.5em 0;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:.3em;display:block}.editor-content h2{font-size:1.7em;font-weight:bold;margin:.5em 0;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:.2em;display:block}.editor-content h3{font-size:1.4em;font-weight:bold;margin:.5em 0;color:var(--accent);display:block}.editor-content h4{font-size:1.2em;font-weight:bold;margin:.5em 0;color:var(--accent);display:block}.editor-content h5{font-size:1.1em;font-weight:bold;margin:.5em 0;color:var(--accent);display:block}.editor-content h6{font-size:1em;font-weight:bold;margin:.5em 0;color:var(--accent);display:block}.editor-content strong{font-weight:bold;color:var(--text-primary)}.editor-content em{font-style:italic;color:#ffa657}.editor-content code{background:var(--bg-tertiary);padding:2px 6px;border-radius:4px;font-family:'Courier New',monospace;font-size:.9em;color:#f97583}.editor-content blockquote{border-left:4px solid var(--accent);padding-left:16px;margin:1em 0;color:var(--text-secondary);font-style:italic;background:rgba(88,166,255,0.05);padding:16px;border-radius:0 6px 6px 0;display:block}.editor-content ul,.editor-content ol{padding-left:24px;margin:1em 0}.editor-content li{margin:.5em 0}.markdown-syntax{color:var(--text-secondary);font-size:.8em}.modal{display:none;position:fixed;z-index:1001;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,0.6);justify-content:center;align-items:center}.modal-content{background-color:var(--bg-secondary);margin:auto;padding:20px;border:1px solid var(--border);border-radius:8px;width:80%;max-width:400px;box-shadow:0 5px 15px rgba(0,0,0,0.5);text-align:center}.modal-content p{margin-bottom:20px;color:var(--text-primary)}.modal-buttons{display:flex;justify-content:space-around;gap:10px}.modal-buttons button{flex:1;padding:10px 15px;border-radius:5px;cursor:pointer;font-family:'OpenDyslexic',Arial,sans-serif;font-size:14px;transition:background .2s}.modal-buttons .confirm-btn{background-color:var(--danger);color:white;border:1px solid var(--danger)}.modal-buttons .confirm-btn:hover{background-color:#b32d2c}.modal-buttons .cancel-btn{background-color:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border)}.modal-buttons .cancel-btn:hover{background-color:var(--bg-primary)}.formatting-toolbar{display:none;position:absolute;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:1000;gap:5px;flex-wrap:wrap}.formatting-toolbar button{background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:5px;cursor:pointer;font-size:14px;transition:background .2s,border-color .2s}.formatting-toolbar button:hover{background:var(--accent);border-color:var(--accent)}@media(max-width:768px){.options-panel{width:100vw;right:-100vw}.editor-content{padding:20px;font-size:14px}.formatting-toolbar{flex-direction:row;flex-wrap:wrap;max-width:90vw}}</style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- User ID Display -->
-        <div id="userIdDisplay" style="position: fixed; bottom: 20px; left: 20px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 12px; border-radius: 6px; font-size: 12px; z-index: 1000; display: none;"></div>
-
-        <button class="options-btn" id="optionsBtn">
-            <i class="fas fa-cog"></i>
-        </button>
-
-        <div class="options-panel" id="optionsPanel">
-            <div class="options-header">
-                <h3>Settings</h3>
-            </div>
-            <div class="options-content">
-                <div class="option-group">
-                    <label class="option-label">Draft Title (Optional)</label>
-                    <input type="text" class="option-control" id="draftTitle" placeholder="Leave empty to auto-generate from content">
-                </div>
-
-                <div class="option-group">
-                    <label class="option-label">Text Size</label>
-                    <div class="zoom-control">
-                        <span>Small</span>
-                        <input type="range" class="zoom-slider" id="zoomSlider" min="50" max="200" value="100">
-                        <span class="zoom-value" id="zoomValue">100%</span>
-                    </div>
-                </div>
-
-                <div class="option-group">
-                    <button class="btn primary" id="newDraft">New Draft</button>
-                </div>
-
-                <div class="option-group drafts-section">
-                    <label class="option-label">Drafts</label>
-                    <div class="drafts-list" id="draftsList">
-                        <!-- Drafts will be populated here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="editor-container">
-            <div class="editor-content" id="editor" contenteditable="true"></div>
-        </div>
-    </div>
-
-    <!-- Floating Formatting Toolbar -->
-    <div id="formattingToolbar" class="formatting-toolbar">
-        <button data-format="bold"><i class="fas fa-bold"></i></button>
-        <button data-format="italic"><i class="fas fa-italic"></i></button>
-        <button data-format="h1">H1</button>
-        <button data-format="h2">H2</button>
-        <button data-format="blockquote"><i class="fas fa-quote-right"></i></button>
-        <button data-format="code"><i class="fas fa-code"></i></button>
-        <button data-format="link"><i class="fas fa-link"></i></button>
-    </div>
-
-    <!-- Custom Confirmation Modal -->
-    <div id="confirmationModal" class="modal">
-        <div class="modal-content">
-            <p id="modalMessage">Are you sure?</p>
-            <div class="modal-buttons">
-                <button class="confirm-btn" id="modalConfirmBtn">Confirm</button>
-                <button class="cancel-btn" id="modalCancelBtn">Cancel</button>
-            </div>
-        </div>
-    </div>
+<div class=app-container>
+<button class=options-btn id=optionsBtn>
+<i class="fas fa-cog"></i>
+</button>
+<div class=options-panel id=optionsPanel>
+<div class=options-header>
+<h3>Settings</h3>
+</div>
+<div class=options-content>
+<div class=option-group>
+<label class=option-label>Draft Title (Optional)</label>
+<input type=text class=option-control id=draftTitle placeholder="Leave empty to auto-generate from content">
+</div>
+<div class=option-group>
+<label class=option-label>Text Size</label>
+<div class=zoom-control>
+<span>Small</span>
+<input type=range class=zoom-slider id=zoomSlider min=50 max=200 value=100>
+<span class=zoom-value id=zoomValue>100%</span>
+</div>
+</div>
+<div class=option-group>
+<button class="btn primary" id=newDraft>New Draft</button>
+</div>
+<div class="option-group drafts-section">
+<label class=option-label>Drafts</label>
+<div class=drafts-list id=draftsList>
+</div>
+</div>
+</div>
+</div>
+<div class=editor-container>
+<div class=editor-content id=editor contenteditable=true></div>
+</div>
+</div>
+<div id=formattingToolbar class=formatting-toolbar>
+<button data-format=bold><i class="fas fa-bold"></i></button>
+<button data-format=italic><i class="fas fa-italic"></i></button>
+<button data-format=h1>H1</button>
+<button data-format=h2>H2</button>
+<button data-format=blockquote><i class="fas fa-quote-right"></i></button>
+<button data-format=code><i class="fas fa-code"></i></button>
+<button data-format=link><i class="fas fa-link"></i></button>
+</div>
+<div id=confirmationModal class=modal>
+<div class=modal-content>
+<p id=modalMessage>Are you sure?</p>
+<div class=modal-buttons>
+<button class=confirm-btn id=modalConfirmBtn>Confirm</button>
+<button class=cancel-btn id=modalCancelBtn>Cancel</button>
+</div>
+</div>
+</div>
+<script>class LiveMarkdownEditor{constructor(){this.drafts=[];this.currentDraftId=null;this.autoSaveTimer=null;this.initElements();this.bindEvents();this.createNewDraft();}
+initElements(){this.editor=document.getElementById('editor');this.optionsPanel=document.getElementById('optionsPanel');this.draftsList=document.getElementById('draftsList');this.draftTitle=document.getElementById('draftTitle');this.zoomSlider=document.getElementById('zoomSlider');this.zoomValue=document.getElementById('zoomValue');this.optionsBtn=document.getElementById('optionsBtn');this.formattingToolbar=document.getElementById('formattingToolbar');this.formatButtons=this.formattingToolbar.querySelectorAll('button[data-format]');this.confirmationModal=document.getElementById('confirmationModal');this.modalMessage=document.getElementById('modalMessage');this.modalConfirmBtn=document.getElementById('modalConfirmBtn');this.modalCancelBtn=document.getElementById('modalCancelBtn');}
+bindEvents(){this.optionsBtn.addEventListener('click',(e)=>{e.stopPropagation();const isPanelOpen=this.optionsPanel.classList.toggle('open');if(isPanelOpen){this.optionsBtn.innerHTML='<i class="fas fa-times"></i>';}else{this.optionsBtn.innerHTML='<i class="fas fa-cog"></i>';}});this.zoomSlider.addEventListener('input',(e)=>{const zoom=e.target.value;this.editor.style.fontSize=`${zoom/100*16}px`;this.zoomValue.textContent=`${zoom}%`;});document.getElementById('newDraft').addEventListener('click',()=>{this.createNewDraft();});this.editor.addEventListener('input',()=>{this.scheduleAutoSave();});this.editor.addEventListener('mouseup',this.handleSelectionChange.bind(this));this.editor.addEventListener('keyup',this.handleSelectionChange.bind(this));document.addEventListener('mousedown',(e)=>{if(!this.formattingToolbar.contains(e.target)&&!this.editor.contains(e.target)){this.hideToolbar();}});this.draftTitle.addEventListener('input',()=>{this.scheduleAutoSave();});document.addEventListener('click',(e)=>{if(!this.optionsPanel.contains(e.target)&&!this.optionsBtn.contains(e.target)){this.optionsPanel.classList.remove('open');this.optionsBtn.innerHTML='<i class="fas fa-cog"></i>';}});this.formatButtons.forEach(button=>{button.addEventListener('click',(e)=>{e.preventDefault();const format=e.currentTarget.dataset.format;this.applyFormat(format);this.hideToolbar();});});this.editor.addEventListener('keydown',(e)=>{if(e.ctrlKey||e.metaKey){if(e.key==='b'||e.key==='i'||e.key==='u'||e.key==='`'){e.preventDefault();}}});}
+handleSelectionChange(){const selection=window.getSelection();if(!selection.isCollapsed&&this.editor.contains(selection.focusNode)&&this.editor.contains(selection.anchorNode)){const range=selection.getRangeAt(0);const rect=range.getBoundingClientRect();let toolbarTop=rect.top+window.scrollY-this.formattingToolbar.offsetHeight-10;let toolbarLeft=rect.left+window.scrollX+(rect.width/2)-(this.formattingToolbar.offsetWidth/2);if(toolbarTop<window.scrollY+10){toolbarTop=rect.bottom+window.scrollY+10;}
+if(toolbarLeft<window.scrollX+10){toolbarLeft=window.scrollX+10;}
+if(toolbarLeft+this.formattingToolbar.offsetWidth>window.innerWidth-10){toolbarLeft=window.innerWidth-this.formattingToolbar.offsetWidth-10;}
+this.formattingToolbar.style.display='flex';this.formattingToolbar.style.left=`${toolbarLeft}px`;this.formattingToolbar.style.top=`${toolbarTop}px`;}else{this.hideToolbar();}}
+hideToolbar(){this.formattingToolbar.style.display='none';}
+applyFormat(command){this.editor.focus();switch(command){case'bold':document.execCommand('bold',false,null);break;case'italic':document.execCommand('italic',false,null);break;case'h1':document.execCommand('formatBlock',false,'<h1>');break;case'h2':document.execCommand('formatBlock',false,'<h2>');break;case'blockquote':document.execCommand('formatBlock',false,'<blockquote>');break;case'code':const selection=window.getSelection();if(!selection.rangeCount)break;const range=selection.getRangeAt(0);let selectedNode=range.commonAncestorContainer;const isAlreadyPre=selectedNode.closest('pre');if(isAlreadyPre){document.execCommand('formatBlock',false,'p');const currentSelection=window.getSelection();if(currentSelection.rangeCount){const currentRange=currentSelection.getRangeAt(0);const parentCode=currentRange.commonAncestorContainer.closest('code');if(parentCode&&parentCode.parentNode===isAlreadyPre){const fragment=document.createDocumentFragment();while(parentCode.firstChild){fragment.appendChild(parentCode.firstChild);}
+parentCode.parentNode.replaceChild(fragment,parentCode);}}}else{const originalContent=range.extractContents();const preElement=document.createElement('pre');const codeElement=document.createElement('code');codeElement.appendChild(originalContent);preElement.appendChild(codeElement);range.insertNode(preElement);range.selectNodeContents(codeElement);selection.removeAllRanges();selection.addRange(range);}
+break;case'link':const url=prompt('Enter the URL:','https://');if(url){document.execCommand('createLink',false,url);}
+break;default:console.warn('Unknown format command:',command);break;}
+this.scheduleAutoSave();}
+placeCursorAtEnd(){const selection=window.getSelection();const range=document.createRange();if(this.editor.lastChild){if(this.editor.lastChild.nodeType===Node.TEXT_NODE){range.setStart(this.editor.lastChild,this.editor.lastChild.textContent.length);}else{range.setStartAfter(this.editor.lastChild);}}else{range.setStart(this.editor,0);}
+range.collapse(true);selection.removeAllRanges();selection.addRange(range);}
+scheduleAutoSave(){clearTimeout(this.autoSaveTimer);this.autoSaveTimer=setTimeout(()=>{this.saveDraft();},1000);}
+createNewDraft(){const draft={id:Date.now(),title:'',content:'',createdAt:new Date(),updatedAt:new Date()};this.drafts.unshift(draft);this.loadDraft(draft.id);this.renderDrafts();}
+loadDraft(id){const draft=this.drafts.find(d=>d.id===id);if(draft){this.currentDraftId=id;this.draftTitle.value=draft.title;this.editor.innerHTML=draft.content;this.renderDrafts();this.placeCursorAtEnd();}}
+saveDraft(){if(!this.currentDraftId)return;const draft=this.drafts.find(d=>d.id===this.currentDraftId);if(draft){const content=this.editor.innerHTML||'';const textContent=this.editor.textContent||'';draft.title=this.draftTitle.value||this.generateTitleFromContent(textContent);draft.content=content;draft.updatedAt=new Date();this.renderDrafts();}}
+generateTitleFromContent(content){if(!content.trim())return'Untitled Draft';const firstLine=content.split('\n')[0]||'';return firstLine.substring(0,20)+(firstLine.length>20?'...':'')||'Untitled Draft';}
+showConfirmationModal(message){return new Promise((resolve)=>{this.modalMessage.textContent=message;this.confirmationModal.style.display='flex';const confirmHandler=()=>{this.confirmationModal.style.display='none';this.modalConfirmBtn.removeEventListener('click',confirmHandler);this.modalCancelBtn.removeEventListener('click',cancelHandler);resolve(true);};const cancelHandler=()=>{this.confirmationModal.style.display='none';this.modalConfirmBtn.removeEventListener('click',confirmHandler);this.modalCancelBtn.removeEventListener('click',cancelHandler);resolve(false);};this.modalConfirmBtn.addEventListener('click',confirmHandler);this.modalCancelBtn.addEventListener('click',cancelHandler);});}
+async deleteDraft(id){const confirmed=await this.showConfirmationModal('Are you sure you want to delete this draft?');if(confirmed){this.drafts=this.drafts.filter(d=>d.id!==id);if(this.currentDraftId===id){if(this.drafts.length>0){this.loadDraft(this.drafts[0].id);}else{this.createNewDraft();}}
+this.renderDrafts();}}
+renderDrafts(){this.draftsList.innerHTML='';if(this.drafts.length===0){this.draftsList.innerHTML='<div style="color: var(--text-secondary); text-align: center; padding: 2rem;">No drafts</div>';return;}
+this.drafts.forEach(draft=>{const draftEl=document.createElement('div');draftEl.className=`draft-item ${draft.id===this.currentDraftId?'active':''}`;const tempDiv=document.createElement('div');tempDiv.innerHTML=draft.content;const textContent=tempDiv.textContent||tempDiv.innerText||'';const displayTitle=draft.title||this.generateTitleFromContent(textContent);const preview=textContent.substring(0,50)+(textContent.length>50?'...':'');draftEl.innerHTML=`<div class="draft-title">${displayTitle}</div><div class="draft-preview">${preview||'Empty draft'}</div><div class="draft-actions"><button class="draft-btn"data-action="load"data-id="${draft.id}">Open</button><button class="draft-btn"data-action="delete"data-id="${draft.id}">Delete</button></div>`;const loadBtn=draftEl.querySelector('[data-action="load"]');const deleteBtn=draftEl.querySelector('[data-action="delete"]');loadBtn.addEventListener('click',(e)=>{e.stopPropagation();this.loadDraft(parseInt(e.target.dataset.id));});deleteBtn.addEventListener('click',(e)=>{e.stopPropagation();this.deleteDraft(parseInt(e.target.dataset.id));});this.draftsList.appendChild(draftEl);});}
+loadDrafts(){this.renderDrafts();}}
+document.addEventListener('DOMContentLoaded',()=>{const editor=new LiveMarkdownEditor();});</script>
 </body>
 </html>
