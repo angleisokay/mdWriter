@@ -6,824 +6,1292 @@
 <title>Markdown Editor</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
-  /* OpenDyslexic Font Faces */
-  @font-face {
+/* Font-face definitions for OpenDyslexic */
+@font-face {
     font-family: 'OpenDyslexic';
     src: url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Regular.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
-  }
-  @font-face {
+}
+@font-face {
     font-family: 'OpenDyslexic';
     src: url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Bold.otf') format('opentype');
     font-weight: bold;
     font-style: normal;
-  }
-  @font-face {
+}
+@font-face {
     font-family: 'OpenDyslexic';
-    src: url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Italic.otf') format('opentype');
+    src: url('./opendyslexic-0912/compiled/OpenDyslexic-Italic.otf') format('opentype');
     font-weight: normal;
     font-style: italic;
-  }
-  @font-face {
+}
+@font-face {
     font-family: 'OpenDyslexic';
-    src: url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Bold-Italic.otf') format('opentype');
+    src: url('./opendyslexic-0912/compiled/OpenDyslexic-BoldItalic.otf') format('opentype');
     font-weight: bold;
     font-style: italic;
-  }
+}
 
-  :root {
-    --editor-font: 'OpenDyslexic', Arial, sans-serif;
-    --editor-font-size: 1.1rem;
-    --editor-line-height: 1.6;
-    --editor-letter-spacing: 0.04em;
-    --text-color: #181818;
-  }
+/* Variables for dark and light mode */
+:root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --text-primary: #f0f6fc;
+    --text-secondary: #7d8590;
+    --accent: #58a6ff;
+    --accent-hover: #388bfd;
+    --border: #30363d;
+    --success: #238636;
+    --danger: #da3633;
+    --font-family: 'OpenDyslexic', Arial, sans-serif;
+}
 
-  body {
+body.light-mode {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f6f8fa;
+    --bg-tertiary: #e1e4e8;
+    --text-primary: #24292e;
+    --text-secondary: #586069;
+    --accent: #0366d6;
+    --accent-hover: #005cc5;
+    --border: #d1d5da;
+    --success: #28a745;
+    --danger: #cb2431;
+}
+
+/* Global styles */
+* {
     margin: 0;
-    font-family: var(--editor-font);
-    background: #f9f9fb;
-    color: var(--text-color);
-    transition: background 0.2s, color 0.2s;
-  }
+    padding: 0;
+    box-sizing: border-box;
+}
 
-  .app-container {
+body {
+    font-family: var(--font-family);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.app-container {
     display: flex;
     height: 100vh;
-  }
+    position: relative;
+}
 
-  /* --- Options Button --- */
-  .options-btn {
-    position: absolute;
-    left: 1rem;
-    top: 1rem;
-    width: 42px;
-    height: 42px;
-    border: none;
-    background: #fff;
-    border-radius: 50%; /* Ensures circular shape */
-    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+/* Options button styling */
+.options-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 12px;
+    border-radius: 50%; /* Ensures it stays circular */
     cursor: pointer;
+    font-size: 16px;
+    transition: all .2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    width: 44px; /* Explicitly set width and height for perfect circle */
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100;
-    transition: background 0.2s, box-shadow 0.2s;
-    padding: 0;
-  }
-  .options-btn i {
-    font-size: 1.6rem;
-    margin: 0;
-    padding: 0;
-  }
-  .options-btn:active {
-    background: #eee;
-  }
+}
 
-  /* --- Options Panel --- */
-  .options-panel {
-    position: absolute;
-    left: 0;
+.options-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Options panel styling */
+.options-panel {
+    position: fixed;
     top: 0;
-    width: 340px;
-    height: 100%;
-    background: #fff;
-    border-right: 1px solid #eee;
-    transform: translateX(-360px);
-    transition: transform 0.2s cubic-bezier(.4,0,.2,1);
-    z-index: 90;
-    box-shadow: 2px 0 12px rgba(0,0,0,0.05);
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border);
+    transition: right .3s ease;
+    z-index: 999;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-  }
-  .options-panel.open {
-    transform: translateX(0);
-  }
-  .options-header {
-    padding: 1.2rem 1.5rem 0.8rem 1.5rem;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  .options-header h3 { margin: 0; }
+    box-shadow: -4px 0 12px rgba(0,0,0,0.3);
+}
 
-  .options-content { padding: 1rem 1.5rem; }
-  .option-group { margin-bottom: 1.5rem; }
-  .option-label { display: block; font-size: 1rem; margin-bottom: 0.5rem; font-weight: bold; }
+.options-panel.open {
+    right: 0;
+}
 
-  .option-control, .zoom-slider {
-    width: 100%;
-    padding: 0.3rem 0.5rem;
-    font-size: 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    outline: none;
-    margin-bottom: 0.2rem;
-  }
-
-  .btn.primary {
-    background: #2679e8;
-    color: #fff;
-    border: none;
-    padding: 0.6rem 1.4rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background 0.2s;
-  }
-  .btn.primary:hover { background: #1656b7; }
-
-  /* --- Drafts Section --- */
-  .drafts-list {
-    max-height: 18rem;
-    overflow-y: auto;
-    border: 1px solid #f0f0f0;
-    border-radius: 6px;
-    background: #fafaff;
-    padding: 0.25rem;
-  }
-  .draft-item {
+.options-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    padding: 0.6rem 0.9rem;
-    border-radius: 6px;
-    margin-bottom: 0.25rem;
-    background: #fff;
-    cursor: pointer;
-    border: 1px solid transparent;
-    user-select: none;
-    transition: box-shadow 0.15s, border 0.15s, background 0.1s;
-  }
-  .draft-item.active {
-    border: 1.5px solid #2679e8;
-    background: #eaf2ff;
-  }
-  .draft-item.dragging {
-    opacity: 0.5;
-    background: #d5e4fa;
-  }
-  .draft-item.drag-over {
-    border: 1.5px dashed #2679e8;
-  }
-  .draft-info {
+    align-items: center;
+}
+
+.options-content {
     flex: 1;
-  }
-  .draft-title { font-weight: bold; }
-  .draft-date { font-size: 0.8em; color: #888; }
-  .draft-delete {
-    background: none;
-    border: none;
-    color: #e04848;
-    font-size: 1.2em;
-    margin-left: 0.7em;
-    cursor: pointer;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.option-group {
+    margin-bottom: 24px;
+}
+
+.option-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.option-control {
+    width: 100%;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 12px;
+    border-radius: 6px;
+    font-family: var(--font-family);
+    font-size: 14px;
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.option-control:focus {
+    outline: 0;
+    border-color: var(--accent);
+}
+
+.zoom-control {
     display: flex;
     align-items: center;
-  }
+    gap: 12px;
+}
 
-  /* --- Editor --- */
-  .editor-container {
+.zoom-slider {
     flex: 1;
-    min-width: 0;
-    padding: 3.5rem 1.5rem 1.5rem 370px;
-    transition: padding-left 0.2s;
-    height: 100vh;
-    box-sizing: border-box;
-  }
-  .options-panel:not(.open) ~ .editor-container {
-    padding-left: 2rem;
-  }
-  .editor-content {
-    min-height: 70vh;
-    background: #fff;
-    border-radius: 10px;
-    padding: 2rem;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.03);
-    font-family: var(--editor-font);
-    font-size: var(--editor-font-size);
-    line-height: var(--editor-line-height);
-    letter-spacing: var(--editor-letter-spacing);
-    color: var(--text-color);
-    outline: none;
-    transition: font-family 0.2s, font-size 0.2s, color 0.2s;
-    word-break: break-word;
-    /* Prevent font scaling glitches */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    resize: vertical;
-    overflow: auto;
-  }
-  .editor-content[contenteditable="true"]:empty:before {
-    content: 'Start writing your draft...';
-    opacity: 0.4;
-    pointer-events: none;
-    font-style: italic;
-    color: #8e8e8e;
-  }
+    accent-color: var(--accent);
+}
 
-  /* --- Formatting Toolbar --- */
-  .formatting-toolbar {
-    position: absolute;
-    display: none;
-    background: #fff;
+.zoom-value {
+    min-width: 50px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Drafts section styling */
+.drafts-section {
+    flex: 1;
+}
+
+.drafts-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
     border-radius: 6px;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.11);
-    padding: 0.3rem 0.4rem;
-    z-index: 1001;
-    gap: 0.3rem;
-    top: 0;
-    left: 0;
-    flex-wrap: nowrap;
-  }
-  .formatting-toolbar button {
-    background: none;
-    border: none;
-    font-size: 1.15rem;
-    padding: 0.25rem 0.35rem;
+    background: var(--bg-tertiary);
+}
+
+.draft-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: grab; /* Indicates draggable */
+    transition: background .2s ease;
+    position: relative; /* Needed for drag-n-drop visual feedback */
+}
+
+.draft-item:last-child {
+    border-bottom: 0;
+}
+
+.draft-item:hover {
+    background: var(--bg-primary);
+}
+
+.draft-item.active {
+    background: var(--accent);
+    color: white;
+}
+
+.draft-item.dragging {
+    opacity: 0.5;
+    border: 2px dashed var(--accent);
+}
+
+.draft-title {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.draft-preview {
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.draft-item.active .draft-preview {
+    color: rgba(255,255,255,0.8);
+}
+
+.draft-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end; /* Align buttons to the right */
+}
+
+.draft-btn {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 4px 8px;
     border-radius: 4px;
     cursor: pointer;
-    color: #444;
-    transition: background 0.12s;
-  }
-  .formatting-toolbar button:hover {
-    background: #eaf2ff;
-    color: #2679e8;
-  }
+    font-size: 12px;
+}
 
-  /* --- Modal --- */
-  .modal {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    display: none;
-    background: rgba(0,0,0,0.16);
-    z-index: 2000;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-content {
-    background: #fff;
-    border-radius: 10px;
-    padding: 2.5rem 2.2rem 2rem 2.2rem;
-    box-shadow: 0 6px 32px rgba(0,0,0,0.11);
-    min-width: 320px;
-    text-align: center;
-  }
-  .modal-buttons {
-    margin-top: 1.4rem;
-    display: flex;
-    justify-content: center;
-    gap: 1.1rem;
-  }
-  .confirm-btn, .cancel-btn {
-    padding: 0.6rem 1.4rem;
+.draft-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--accent);
+}
+
+/* General button styling */
+.btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 12px 16px;
     border-radius: 6px;
-    border: none;
-    font-size: 1rem;
     cursor: pointer;
-  }
-  .confirm-btn { background: #2679e8; color: #fff; }
-  .cancel-btn { background: #eaeaea; color: #222; }
+    font-family: var(--font-family);
+    font-size: 14px;
+    transition: all .2s ease;
+}
 
-  /* Color Picker */
-  .color-picker {
+.btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.btn.primary {
+    background: var(--success);
+    border-color: var(--success);
+}
+
+.btn.primary:hover {
+    background: #2ea043;
+}
+
+/* Editor styling */
+.editor-container {
+    flex: 1;
     display: flex;
-    align-items: center;
-    gap: 0.6em;
-  }
-  .color-picker input[type="color"] {
-    width: 32px;
-    height: 32px;
-    border: none;
-    border-radius: 50%;
-    background: none;
-    cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  }
+    flex-direction: column;
+}
 
-  /* Toggle Switch */
-  .switch {
-    display: inline-flex;
+.editor-content {
+    flex: 1;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 0;
+    padding: 40px;
+    font-family: var(--font-family);
+    font-size: 16px;
+    line-height: 1.6; /* Adjusted line height for better readability */
+    letter-spacing: 0; /* Reset letter spacing */
+    outline: 0;
+    overflow-y: auto;
+    min-height: 100%;
+    word-wrap: break-word; /* Prevents text stretching */
+    white-space: pre-wrap; /* Maintains white space and wraps text */
+}
+
+.editor-content:empty::before {
+    content: "Start typing here... Highlight text to format!";
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Headings and text formatting */
+.editor-content h1 {
+    font-size: 2em;
+    font-weight: bold;
+    margin: .5em 0;
+    color: var(--accent);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: .3em;
+    display: block;
+}
+
+.editor-content h2 {
+    font-size: 1.7em;
+    font-weight: bold;
+    margin: .5em 0;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: .2em;
+    display: block;
+}
+
+.editor-content h3 { /* H3 styling */
+    font-size: 1.4em;
+    font-weight: bold;
+    margin: .5em 0;
+    color: var(--accent);
+    display: block;
+}
+
+.editor-content h4 {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: .5em 0;
+    color: var(--accent);
+    display: block;
+}
+
+.editor-content h5 {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: .5em 0;
+    color: var(--accent);
+    display: block;
+}
+
+.editor-content h6 {
+    font-size: 1em;
+    font-weight: bold;
+    margin: .5em 0;
+    color: var(--accent);
+    display: block;
+}
+
+.editor-content strong {
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.editor-content em {
+    font-style: italic; /* Ensure italic works */
+    color: #ffa657;
+}
+
+.editor-content code {
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: .9em;
+    color: #f97583;
+}
+
+.editor-content pre {
+    background: var(--bg-tertiary);
+    padding: 16px;
+    border-radius: 8px;
+    margin: 1em 0;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+    font-size: .9em;
+    color: #f97583;
+}
+
+.editor-content blockquote {
+    border-left: 4px solid var(--accent);
+    padding-left: 16px;
+    margin: 1em 0;
+    color: var(--text-secondary);
+    font-style: italic;
+    background: rgba(88,166,255,0.05);
+    padding: 16px;
+    border-radius: 0 6px 6px 0;
+    display: block;
+}
+
+.editor-content ul, .editor-content ol {
+    padding-left: 24px;
+    margin: 1em 0;
+}
+
+.editor-content li {
+    margin: .5em 0;
+}
+
+.markdown-syntax {
+    color: var(--text-secondary);
+    font-size: .8em;
+}
+
+/* Modal styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+    justify-content: center;
     align-items: center;
+}
+
+.modal-content {
+    background-color: var(--bg-secondary);
+    margin: auto;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 80%;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+.modal-content p {
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+}
+
+.modal-buttons button {
+    flex: 1;
+    padding: 10px 15px;
+    border-radius: 5px;
     cursor: pointer;
-    user-select: none;
-  }
-  .switch input { display: none; }
-  .slider {
-    width: 42px;
-    height: 22px;
-    background: #e0e0e0;
-    border-radius: 22px;
-    position: relative;
-    margin-right: 0.6em;
-    transition: background 0.2s;
-  }
-  .slider:before {
-    content: "";
+    font-family: var(--font-family);
+    font-size: 14px;
+    transition: background .2s ease;
+}
+
+.modal-buttons .confirm-btn {
+    background-color: var(--danger);
+    color: white;
+    border: 1px solid var(--danger);
+}
+
+.modal-buttons .confirm-btn:hover {
+    background-color: #b32d2c;
+}
+
+.modal-buttons .cancel-btn {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+
+.modal-buttons .cancel-btn:hover {
+    background-color: var(--bg-primary);
+}
+
+/* Formatting toolbar styling */
+.formatting-toolbar {
+    display: none;
     position: absolute;
-    width: 18px;
-    height: 18px;
-    left: 2px;
-    top: 2px;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    transition: transform 0.2s;
-  }
-  input:checked + .slider { background: #2679e8; }
-  input:checked + .slider:before {
-    transform: translateX(20px);
-  }
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+    gap: 5px;
+    flex-wrap: wrap;
+}
 
-  /* --- Fixes for font rendering & italics --- */
-  .editor-content, .editor-content * {
-    font-family: var(--editor-font);
-    font-size: inherit;
-    line-height: inherit;
-    letter-spacing: inherit;
-    color: inherit;
-    /* Fix for italic/bold/italic-bold */
-    font-style: inherit !important;
-    font-weight: inherit !important;
-  }
-  .editor-content em, .editor-content i {
-    font-style: italic !important;
-    font-family: var(--editor-font) !important;
-  }
-  .editor-content strong, .editor-content b {
-    font-weight: bold !important;
-    font-family: var(--editor-font) !important;
-  }
-  .editor-content em strong, .editor-content strong em, .editor-content b i, .editor-content i b {
-    font-style: italic !important;
-    font-weight: bold !important;
-    font-family: var(--editor-font) !important;
-  }
+.formatting-toolbar button, .formatting-toolbar input[type="color"] {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background .2s,border-color .2s;
+    -webkit-appearance: none; /* For color input */
+    -moz-appearance: none; /* For color input */
+    appearance: none; /* For color input */
+    width: 40px; /* For color input */
+    height: 40px; /* For color input */
+    padding: 0; /* For color input */
+}
+
+.formatting-toolbar button:hover, .formatting-toolbar input[type="color"]:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.formatting-toolbar input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+.formatting-toolbar input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+.formatting-toolbar input[type="color"]::-moz-color-swatch-wrapper {
+    padding: 0;
+}
+.formatting-toolbar input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+/* Responsive adjustments */
+@media(max-width: 768px) {
+    .options-panel {
+        width: 100vw;
+        right: -100vw;
+    }
+    .editor-content {
+        padding: 20px;
+        font-size: 14px;
+    }
+    .formatting-toolbar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        max-width: 90vw;
+    }
+}
 </style>
 </head>
 <body>
 <div class="app-container">
-  <button class="options-btn" id="optionsBtn">
-    <i class="fas fa-cog"></i>
-  </button>
-  <div class="options-panel" id="optionsPanel">
-    <div class="options-header">
-      <h3>Settings</h3>
-    </div>
-    <div class="options-content">
-      <div class="option-group">
-        <label class="option-label">Draft Title (Optional)</label>
-        <input type="text" class="option-control" id="draftTitle" placeholder="Leave empty to auto-generate from content">
-      </div>
-      <div class="option-group">
-        <label class="option-label">Text Size</label>
-        <div class="zoom-control">
-          <span>Small</span>
-          <input type="range" class="zoom-slider" id="zoomSlider" min="50" max="200" value="100">
-          <span class="zoom-value" id="zoomValue">100%</span>
+    <!-- Options button -->
+    <button class="options-btn" id="optionsBtn">
+        <i class="fas fa-cog"></i>
+    </button>
+
+    <!-- Options panel -->
+    <div class="options-panel" id="optionsPanel">
+        <div class="options-header">
+            <h3>Settings</h3>
         </div>
-      </div>
-      <div class="option-group">
-        <label class="option-label">Text Color</label>
-        <div class="color-picker">
-          <input type="color" id="colorPicker" value="#181818">
-          <span id="colorValue">#181818</span>
+        <div class="options-content">
+            <div class="option-group">
+                <label class="option-label">Draft Title (Optional)</label>
+                <input type="text" class="option-control" id="draftTitle" placeholder="Leave empty to auto-generate from content">
+            </div>
+
+            <div class="option-group">
+                <label class="option-label">Text Size</label>
+                <div class="zoom-control">
+                    <span>Small</span>
+                    <input type="range" class="zoom-slider" id="zoomSlider" min="50" max="200" value="100">
+                    <span class="zoom-value" id="zoomValue">100%</span>
+                </div>
+            </div>
+
+            <div class="option-group">
+                <label class="option-label">Font Preference</label>
+                <input type="checkbox" id="toggleOpenDyslexic"> Use OpenDyslexic Font
+            </div>
+
+            <div class="option-group">
+                <label class="option-label">Theme</label>
+                <input type="checkbox" id="toggleLightMode"> Light Mode
+            </div>
+
+            <div class="option-group">
+                <button class="btn primary" id="newDraft">New Draft</button>
+            </div>
+
+            <div class="option-group drafts-section">
+                <label class="option-label">Drafts</label>
+                <div class="drafts-list" id="draftsList">
+                    <!-- Drafts will be rendered here -->
+                </div>
+            </div>
+
+            <div class="option-group">
+                <label class="option-label">Download Options</label>
+                <button class="btn" id="downloadMarkdown">Download .md</button>
+                <button class="btn" id="downloadHTML">Download .html</button>
+                <button class="btn" id="downloadTXT">Download .txt</button>
+            </div>
         </div>
-      </div>
-      <div class="option-group">
-        <label class="option-label">OpenDyslexic Font</label>
-        <label class="switch">
-          <input type="checkbox" id="openDyslexicToggle" checked>
-          <span class="slider"></span>
-          <span id="fontToggleLabel">Enabled</span>
-        </label>
-      </div>
-      <div class="option-group">
-        <button class="btn primary" id="newDraft">New Draft</button>
-      </div>
-      <div class="option-group drafts-section">
-        <label class="option-label">Drafts</label>
-        <div class="drafts-list" id="draftsList"></div>
-      </div>
     </div>
-  </div>
-  <div class="editor-container">
-    <div class="editor-content" id="editor" contenteditable="true"></div>
-  </div>
+
+    <!-- Editor container -->
+    <div class="editor-container">
+        <div class="editor-content" id="editor" contenteditable="true"></div>
+    </div>
 </div>
+
+<!-- Formatting toolbar -->
 <div id="formattingToolbar" class="formatting-toolbar">
-  <button data-format="bold"><i class="fas fa-bold"></i></button>
-  <button data-format="italic"><i class="fas fa-italic"></i></button>
-  <button data-format="h1">H1</button>
-  <button data-format="h2">H2</button>
-  <button data-format="h3">H3</button><!-- NEW H3 button -->
-  <button data-format="blockquote"><i class="fas fa-quote-right"></i></button>
-  <button data-format="code"><i class="fas fa-code"></i></button>
-  <button data-format="link"><i class="fas fa-link"></i></button>
+    <button data-format="bold"><i class="fas fa-bold"></i></button>
+    <button data-format="italic"><i class="fas fa-italic"></i></button>
+    <button data-format="h1">H1</button>
+    <button data-format="h2">H2</button>
+    <button data-format="h3">H3</button> <!-- Added H3 button -->
+    <button data-format="blockquote"><i class="fas fa-quote-right"></i></button>
+    <button data-format="code"><i class="fas fa-code"></i></button>
+    <button data-format="link"><i class="fas fa-link"></i></button>
+    <input type="color" id="textColorPicker" value="#f0f6fc"> <!-- Text color picker -->
 </div>
+
+<!-- Confirmation Modal -->
 <div id="confirmationModal" class="modal">
-  <div class="modal-content">
-    <p id="modalMessage">Are you sure?</p>
-    <div class="modal-buttons">
-      <button class="confirm-btn" id="modalConfirmBtn">Confirm</button>
-      <button class="cancel-btn" id="modalCancelBtn">Cancel</button>
+    <div class="modal-content">
+        <p id="modalMessage">Are you sure?</p>
+        <div class="modal-buttons">
+            <button class="confirm-btn" id="modalConfirmBtn">Confirm</button>
+            <button class="cancel-btn" id="modalCancelBtn">Cancel</button>
+        </div>
     </div>
-  </div>
 </div>
+
 <script>
 class LiveMarkdownEditor {
-  constructor() {
-    this.drafts = [];
-    this.currentDraftId = null;
-    this.autoSaveTimer = null;
-    this.localStorageKey = 'markdownEditorDrafts';
-    this.initElements();
-    this.bindEvents();
-    this.loadDraftsFromLocalStorage();
-    this.applySettingsFromLocalStorage();
-    this.renderDrafts();
-    this.setEditorStyles();
-  }
-  initElements() {
-    this.editor = document.getElementById('editor');
-    this.optionsPanel = document.getElementById('optionsPanel');
-    this.draftsList = document.getElementById('draftsList');
-    this.draftTitle = document.getElementById('draftTitle');
-    this.optionsBtn = document.getElementById('optionsBtn');
-    this.zoomSlider = document.getElementById('zoomSlider');
-    this.zoomValue = document.getElementById('zoomValue');
-    this.newDraftBtn = document.getElementById('newDraft');
-    this.formattingToolbar = document.getElementById('formattingToolbar');
-    this.confirmationModal = document.getElementById('confirmationModal');
-    this.modalMessage = document.getElementById('modalMessage');
-    this.modalConfirmBtn = document.getElementById('modalConfirmBtn');
-    this.modalCancelBtn = document.getElementById('modalCancelBtn');
-    this.colorPicker = document.getElementById('colorPicker');
-    this.colorValue = document.getElementById('colorValue');
-    this.openDyslexicToggle = document.getElementById('openDyslexicToggle');
-    this.fontToggleLabel = document.getElementById('fontToggleLabel');
-  }
-  bindEvents() {
-    document.addEventListener('click', (e) => {
-      if (!this.optionsPanel.contains(e.target) && !this.optionsBtn.contains(e.target)) {
-        this.optionsPanel.classList.remove('open');
-        this.optionsBtn.innerHTML = '<i class="fas fa-cog"></i>';
-      }
-    });
-    this.optionsBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isPanelOpen = this.optionsPanel.classList.toggle('open');
-      this.optionsBtn.innerHTML = isPanelOpen
-        ? '<i class="fas fa-times"></i>'
-        : '<i class="fas fa-cog"></i>';
-    });
-    this.zoomSlider.addEventListener('input', () => {
-      this.zoomValue.textContent = `${this.zoomSlider.value}%`;
-      localStorage.setItem('mdw_zoom', this.zoomSlider.value);
-      this.setEditorStyles();
-    });
-    this.colorPicker.addEventListener('input', () => {
-      this.colorValue.textContent = this.colorPicker.value;
-      localStorage.setItem('mdw_text_color', this.colorPicker.value);
-      this.setEditorStyles();
-    });
-    this.openDyslexicToggle.addEventListener('change', () => {
-      localStorage.setItem('mdw_opendyslexic', this.openDyslexicToggle.checked ? 'on' : 'off');
-      this.fontToggleLabel.textContent = this.openDyslexicToggle.checked ? 'Enabled' : 'Disabled';
-      this.setEditorStyles();
-    });
-    this.draftTitle.addEventListener('input', () => this.scheduleAutoSave());
-    this.newDraftBtn.addEventListener('click', () => this.createNewDraft());
-    this.editor.addEventListener('input', () => this.scheduleAutoSave());
-    this.editor.addEventListener('mouseup', () => this.handleSelectionChange());
-    this.editor.addEventListener('keyup', () => this.handleSelectionChange());
-    document.addEventListener('selectionchange', () => this.handleSelectionChange());
-    document.addEventListener('scroll', () => this.hideToolbar());
-    document.addEventListener('mousedown', (e) => {
-      if (!this.formattingToolbar.contains(e.target)) this.hideToolbar();
-    });
-    this.formattingToolbar.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-    });
-    this.formattingToolbar.addEventListener('click', (e) => {
-      if (e.target.closest('button')) {
-        this.applyFormat(e.target.closest('button').dataset.format);
-        this.hideToolbar();
-      }
-    });
-    this.modalConfirmBtn.addEventListener('click', () => {
-      this.modalPromiseResolve(true);
-      this.confirmationModal.style.display = 'none';
-    });
-    this.modalCancelBtn.addEventListener('click', () => {
-      this.modalPromiseResolve(false);
-      this.confirmationModal.style.display = 'none';
-    });
-  }
-  setEditorStyles() {
-    // Font size
-    const zoom = this.zoomSlider.value || 100;
-    document.documentElement.style.setProperty('--editor-font-size', `${zoom / 100 * 1.1}rem`);
-    // Text color
-    const color = this.colorPicker.value || '#181818';
-    document.documentElement.style.setProperty('--text-color', color);
-    // Font
-    const useDyslexic = this.openDyslexicToggle.checked;
-    document.documentElement.style.setProperty('--editor-font',
-      useDyslexic ? "'OpenDyslexic', Arial, sans-serif" : "Arial, sans-serif"
-    );
-  }
-  applySettingsFromLocalStorage() {
-    if (localStorage.getItem('mdw_zoom')) {
-      this.zoomSlider.value = localStorage.getItem('mdw_zoom');
-      this.zoomValue.textContent = `${this.zoomSlider.value}%`;
-    }
-    if (localStorage.getItem('mdw_text_color')) {
-      this.colorPicker.value = localStorage.getItem('mdw_text_color');
-      this.colorValue.textContent = this.colorPicker.value;
-    }
-    if (localStorage.getItem('mdw_opendyslexic')) {
-      this.openDyslexicToggle.checked = localStorage.getItem('mdw_opendyslexic') === 'on';
-      this.fontToggleLabel.textContent = this.openDyslexicToggle.checked ? 'Enabled' : 'Disabled';
-    }
-    this.setEditorStyles();
-  }
-  handleSelectionChange() {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return this.hideToolbar();
-    const range = selection.getRangeAt(0);
-    if (!selection.isCollapsed && this.editor.contains(range.startContainer) && this.editor.contains(range.endContainer)) {
-      const rect = range.getBoundingClientRect();
-      let toolbarLeft = rect.left + window.scrollX - this.formattingToolbar.offsetWidth / 2 + rect.width / 2;
-      let toolbarTop = rect.top + window.scrollY - this.formattingToolbar.offsetHeight - 10;
-      if (toolbarLeft < window.scrollX + 10) toolbarLeft = window.scrollX + 10;
-      if (toolbarLeft + this.formattingToolbar.offsetWidth > window.innerWidth - 10)
-        toolbarLeft = window.innerWidth - this.formattingToolbar.offsetWidth - 10;
-      this.formattingToolbar.style.display = 'flex';
-      this.formattingToolbar.style.left = `${toolbarLeft}px`;
-      this.formattingToolbar.style.top = `${toolbarTop}px`;
-    } else {
-      this.hideToolbar();
-    }
-  }
-  hideToolbar() {
-    this.formattingToolbar.style.display = 'none';
-  }
-  applyFormat(command) {
-    this.editor.focus();
-    switch (command) {
-      case 'bold':
-        document.execCommand('bold', false, null);
-        break;
-      case 'italic':
-        document.execCommand('italic', false, null);
-        break;
-      case 'h1':
-        document.execCommand('formatBlock', false, 'H1');
-        break;
-      case 'h2':
-        document.execCommand('formatBlock', false, 'H2');
-        break;
-      case 'h3':
-        document.execCommand('formatBlock', false, 'H3');
-        break;
-      case 'blockquote':
-        document.execCommand('formatBlock', false, 'BLOCKQUOTE');
-        break;
-      case 'code':
-        this.toggleCode();
-        break;
-      case 'link':
-        const url = prompt('Enter the URL:', 'https://');
-        if (url) document.execCommand('createLink', false, url);
-        break;
-      default:
-        console.warn('Unknown format command:', command);
-        break;
-    }
-    this.scheduleAutoSave();
-  }
-  toggleCode() {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return;
-    const range = selection.getRangeAt(0);
-    const parentCode = this.findParentTag(range.commonAncestorContainer, 'CODE');
-    if (parentCode) {
-      // Toggle off code
-      const fragment = document.createDocumentFragment();
-      while (parentCode.firstChild) fragment.appendChild(parentCode.firstChild);
-      parentCode.parentNode.replaceChild(fragment, parentCode);
-    } else {
-      // Toggle on code
-      const codeNode = document.createElement('code');
-      codeNode.appendChild(range.extractContents());
-      range.insertNode(codeNode);
-      selection.removeAllRanges();
-      const newRange = document.createRange();
-      newRange.selectNodeContents(codeNode);
-      selection.addRange(newRange);
-    }
-  }
-  findParentTag(node, tagName) {
-    while (node && node !== this.editor) {
-      if (node.nodeType === 1 && node.tagName === tagName) return node;
-      node = node.parentNode;
-    }
-    return null;
-  }
-  placeCursorAtEnd() {
-    const selection = window.getSelection();
-    const range = document.createRange();
-    if (this.editor.lastChild) {
-      range.setStartAfter(this.editor.lastChild);
-    } else {
-      range.setStart(this.editor, 0);
-    }
-    range.collapse(true);
-    selection.removeAllRanges();
-    selection.addRange(range);
-  }
-  scheduleAutoSave() {
-    clearTimeout(this.autoSaveTimer);
-    this.autoSaveTimer = setTimeout(() => {
-      this.saveDraft();
-      this.saveDraftsToLocalStorage();
-    }, 1000);
-  }
-  createNewDraft() {
-    this.saveDraft();
-    const draft = {
-      id: Date.now(),
-      title: '',
-      content: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    this.drafts.unshift(draft);
-    this.loadDraft(draft.id);
-    this.renderDrafts();
-    this.saveDraftsToLocalStorage();
-    this.editor.innerHTML = '';
-    this.placeCursorAtEnd();
-  }
-  loadDraft(id) {
-    const draft = this.drafts.find(d => d.id === id);
-    if (draft) {
-      this.currentDraftId = id;
-      this.draftTitle.value = draft.title;
-      this.editor.innerHTML = draft.content;
-      this.renderDrafts();
-      this.placeCursorAtEnd();
-    }
-  }
-  saveDraft() {
-    if (!this.currentDraftId) return;
-    const draft = this.drafts.find(d => d.id === this.currentDraftId);
-    if (draft) {
-      const content = this.editor.innerHTML || '';
-      draft.content = content;
-      draft.updatedAt = new Date().toISOString();
-      draft.title = this.draftTitle.value.trim() || this.generateTitleFromContent(this.editor.textContent || '');
-    }
-  }
-  generateTitleFromContent(content) {
-    if (!content.trim()) return 'Untitled Draft';
-    const firstLine = content.split('\n')[0] || '';
-    return firstLine.substring(0, 20) + (firstLine.length > 20 ? '...' : '') || 'Untitled Draft';
-  }
-  showConfirmationModal(message) {
-    this.modalMessage.textContent = message;
-    this.confirmationModal.style.display = 'flex';
-    return new Promise((resolve) => {
-      this.modalPromiseResolve = resolve;
-    });
-  }
-  async deleteDraft(id) {
-    const confirmed = await this.showConfirmationModal('Are you sure you want to delete this draft?');
-    if (confirmed) {
-      this.drafts = this.drafts.filter(d => d.id !== id);
-      if (this.currentDraftId === id) {
-        if (this.drafts.length > 0) {
-          this.loadDraft(this.drafts[0].id);
+    constructor() {
+        this.drafts = [];
+        this.currentDraftId = null;
+        this.autoSaveTimer = null;
+        this.localStorageKey = 'markdownEditorDrafts';
+        this.initElements();
+        this.bindEvents();
+        this.loadSettingsFromLocalStorage(); // Load settings first
+        this.applySettings(); // Apply settings to UI
+        this.loadDraftsFromLocalStorage();
+        if (this.drafts.length === 0) {
+            this.createNewDraft();
         } else {
-          this.currentDraftId = null;
-          this.draftTitle.value = '';
-          this.editor.innerHTML = '';
+            this.loadDraft(this.drafts[0].id);
         }
-      }
-      this.renderDrafts();
-      this.saveDraftsToLocalStorage();
     }
-  }
-  renderDrafts() {
-    this.draftsList.innerHTML = '';
-    if (this.drafts.length === 0) {
-      this.draftsList.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 2rem;">No drafts</div>';
-      return;
-    }
-    this.drafts.forEach((draft, i) => {
-      const draftEl = document.createElement('div');
-      draftEl.className = `draft-item${draft.id === this.currentDraftId ? ' active' : ''}`;
-      draftEl.setAttribute('draggable', true);
-      draftEl.dataset.index = i;
-      draftEl.dataset.id = draft.id;
 
-      // --- Draft Info ---
-      const infoDiv = document.createElement('div');
-      infoDiv.className = 'draft-info';
-      infoDiv.innerHTML = `
-        <span class="draft-title">${draft.title || 'Untitled Draft'}</span>
-        <br>
-        <span class="draft-date">${new Date(draft.updatedAt).toLocaleString()}</span>
-      `;
-      // Clicking info opens draft
-      infoDiv.addEventListener('click', (e) => {
-        this.saveDraft();
+    initElements() {
+        this.editor = document.getElementById('editor');
+        this.optionsPanel = document.getElementById('optionsPanel');
+        this.draftsList = document.getElementById('draftsList');
+        this.draftTitle = document.getElementById('draftTitle');
+        this.zoomSlider = document.getElementById('zoomSlider');
+        this.zoomValue = document.getElementById('zoomValue');
+        this.optionsBtn = document.getElementById('optionsBtn');
+        this.formattingToolbar = document.getElementById('formattingToolbar');
+        this.formatButtons = this.formattingToolbar.querySelectorAll('button[data-format]');
+        this.textColorPicker = document.getElementById('textColorPicker');
+        this.confirmationModal = document.getElementById('confirmationModal');
+        this.modalMessage = document.getElementById('modalMessage');
+        this.modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        this.modalCancelBtn = document.getElementById('modalCancelBtn');
+        this.toggleOpenDyslexic = document.getElementById('toggleOpenDyslexic');
+        this.toggleLightMode = document.getElementById('toggleLightMode');
+        this.downloadMarkdownBtn = document.getElementById('downloadMarkdown');
+        this.downloadHTMLBtn = document.getElementById('downloadHTML');
+        this.downloadTXTBtn = document.getElementById('downloadTXT');
+    }
+
+    bindEvents() {
+        // Options panel toggle
+        this.optionsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isPanelOpen = this.optionsPanel.classList.toggle('open');
+            if (isPanelOpen) {
+                this.optionsBtn.innerHTML = '<i class="fas fa-times"></i>';
+            } else {
+                this.optionsBtn.innerHTML = '<i class="fas fa-cog"></i>';
+            }
+        });
+
+        // Zoom slider functionality
+        this.zoomSlider.addEventListener('input', (e) => {
+            const zoom = e.target.value;
+            this.editor.style.fontSize = `${zoom / 100 * 16}px`;
+            this.zoomValue.textContent = `${zoom}%`;
+        });
+
+        // New draft creation
+        document.getElementById('newDraft').addEventListener('click', () => {
+            this.createNewDraft();
+        });
+
+        // Auto-save on editor input
+        this.editor.addEventListener('input', () => {
+            this.scheduleAutoSave();
+        });
+
+        // Toolbar visibility on selection/keyup
+        this.editor.addEventListener('mouseup', this.handleSelectionChange.bind(this));
+        this.editor.addEventListener('keyup', this.handleSelectionChange.bind(this));
+        document.addEventListener('mousedown', (e) => {
+            if (!this.formattingToolbar.contains(e.target) && !this.editor.contains(e.target)) {
+                this.hideToolbar();
+            }
+        });
+
+        // Draft title auto-save
+        this.draftTitle.addEventListener('input', () => {
+            this.scheduleAutoSave();
+        });
+
+        // Close options panel when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!this.optionsPanel.contains(e.target) && !this.optionsBtn.contains(e.target)) {
+                this.optionsPanel.classList.remove('open');
+                this.optionsBtn.innerHTML = '<i class="fas fa-cog"></i>';
+            }
+        });
+
+        // Apply formatting via toolbar buttons
+        this.formatButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const format = e.currentTarget.dataset.format;
+                this.applyFormat(format);
+                this.hideToolbar();
+            });
+        });
+
+        // Prevent default browser shortcuts for formatting
+        this.editor.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'b' || e.key === 'i' || e.key === 'u' || e.key === '`') {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // Text color picker functionality
+        this.textColorPicker.addEventListener('input', (e) => {
+            const color = e.target.value;
+            this.applyColor(color);
+            this.scheduleAutoSave();
+        });
+
+        // Toggle OpenDyslexic font
+        this.toggleOpenDyslexic.addEventListener('change', (e) => {
+            this.settings.useOpenDyslexic = e.target.checked;
+            this.applySettings();
+            this.saveSettingsToLocalStorage();
+        });
+
+        // Toggle Light Mode
+        this.toggleLightMode.addEventListener('change', (e) => {
+            this.settings.lightMode = e.target.checked;
+            this.applySettings();
+            this.saveSettingsToLocalStorage();
+        });
+
+        // Download buttons
+        this.downloadMarkdownBtn.addEventListener('click', () => this.downloadContent('md'));
+        this.downloadHTMLBtn.addEventListener('click', () => this.downloadContent('html'));
+        this.downloadTXTBtn.addEventListener('click', () => this.downloadContent('txt'));
+    }
+
+    // Handles selection change to show/hide toolbar
+    handleSelectionChange() {
+        const selection = window.getSelection();
+        if (!selection.isCollapsed && this.editor.contains(selection.focusNode) && this.editor.contains(selection.anchorNode)) {
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            let toolbarTop = rect.top + window.scrollY - this.formattingToolbar.offsetHeight - 10;
+            let toolbarLeft = rect.left + window.scrollX + (rect.width / 2) - (this.formattingToolbar.offsetWidth / 2);
+
+            // Ensure toolbar stays within viewport
+            if (toolbarTop < window.scrollY + 10) {
+                toolbarTop = rect.bottom + window.scrollY + 10;
+            }
+            if (toolbarLeft < window.scrollX + 10) {
+                toolbarLeft = window.scrollX + 10;
+            }
+            if (toolbarLeft + this.formattingToolbar.offsetWidth > window.innerWidth - 10) {
+                toolbarLeft = window.innerWidth - this.formattingToolbar.offsetWidth - 10;
+            }
+
+            this.formattingToolbar.style.display = 'flex';
+            this.formattingToolbar.style.left = `${toolbarLeft}px`;
+            this.formattingToolbar.style.top = `${toolbarTop}px`;
+        } else {
+            this.hideToolbar();
+        }
+    }
+
+    // Hides the formatting toolbar
+    hideToolbar() {
+        this.formattingToolbar.style.display = 'none';
+    }
+
+    // Applies text formatting
+    applyFormat(command) {
+        this.editor.focus();
+        switch (command) {
+            case 'bold':
+                document.execCommand('bold', false, null);
+                break;
+            case 'italic':
+                document.execCommand('italic', false, null);
+                break;
+            case 'h1':
+                document.execCommand('formatBlock', false, '<h1>');
+                break;
+            case 'h2':
+                document.execCommand('formatBlock', false, '<h2>');
+                break;
+            case 'h3': // New H3 format
+                document.execCommand('formatBlock', false, '<h3>');
+                break;
+            case 'blockquote':
+                document.execCommand('formatBlock', false, '<blockquote>');
+                break;
+            case 'code':
+                const selection = window.getSelection();
+                if (!selection.rangeCount) break;
+                const range = selection.getRangeAt(0);
+                let selectedNode = range.commonAncestorContainer;
+                const isAlreadyPre = selectedNode.closest('pre');
+
+                if (isAlreadyPre) {
+                    // If already a pre block, unformat it
+                    document.execCommand('formatBlock', false, 'p');
+                    const currentSelection = window.getSelection();
+                    if (currentSelection.rangeCount) {
+                        const currentRange = currentSelection.getRangeAt(0);
+                        const parentCode = currentRange.commonAncestorContainer.closest('code');
+                        if (parentCode && parentCode.parentNode === isAlreadyPre) {
+                            // Remove the code tag and lift content directly into pre
+                            const fragment = document.createDocumentFragment();
+                            while (parentCode.firstChild) {
+                                fragment.appendChild(parentCode.firstChild);
+                            }
+                            parentCode.parentNode.replaceChild(fragment, parentCode);
+                        }
+                    }
+                } else {
+                    // Wrap selection in <pre><code>
+                    const originalContent = range.extractContents();
+                    const preElement = document.createElement('pre');
+                    const codeElement = document.createElement('code');
+                    codeElement.appendChild(originalContent);
+                    preElement.appendChild(codeElement);
+                    range.insertNode(preElement);
+                    range.selectNodeContents(codeElement);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+                break;
+            case 'link':
+                const url = prompt('Enter the URL:', 'https://');
+                if (url) {
+                    document.execCommand('createLink', false, url);
+                }
+                break;
+            default:
+                console.warn('Unknown format command:', command);
+                break;
+        }
+        this.scheduleAutoSave();
+    }
+
+    // Applies text color
+    applyColor(color) {
+        this.editor.focus();
+        document.execCommand('foreColor', false, color);
+    }
+
+    // Places cursor at the end of the editor content
+    placeCursorAtEnd() {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        if (this.editor.lastChild) {
+            if (this.editor.lastChild.nodeType === Node.TEXT_NODE) {
+                range.setStart(this.editor.lastChild, this.editor.lastChild.textContent.length);
+            } else {
+                range.setStartAfter(this.editor.lastChild);
+            }
+        } else {
+            range.setStart(this.editor, 0);
+        }
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    // Schedules auto-save
+    scheduleAutoSave() {
+        clearTimeout(this.autoSaveTimer);
+        this.autoSaveTimer = setTimeout(() => {
+            this.saveDraft();
+            this.saveDraftsToLocalStorage();
+        }, 1000);
+    }
+
+    // Creates a new draft
+    createNewDraft() {
+        this.saveDraft(); // Save current draft before creating a new one
+        const draft = {
+            id: Date.now(),
+            title: '',
+            content: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        this.drafts.unshift(draft); // Add to the beginning of the array
         this.loadDraft(draft.id);
-      });
-
-      // --- Delete Button ---
-      const delBtn = document.createElement('button');
-      delBtn.className = 'draft-delete';
-      delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
-      delBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.deleteDraft(draft.id);
-      });
-
-      draftEl.appendChild(infoDiv);
-      draftEl.appendChild(delBtn);
-
-      // --- Drag and Drop Handlers ---
-      draftEl.addEventListener('dragstart', (e) => {
-        draftEl.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', i);
-      });
-      draftEl.addEventListener('dragend', (e) => {
-        draftEl.classList.remove('dragging');
         this.renderDrafts();
-      });
-      draftEl.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        const dragging = this.draftsList.querySelector('.dragging');
-        if (dragging !== draftEl) draftEl.classList.add('drag-over');
-      });
-      draftEl.addEventListener('dragleave', (e) => {
-        draftEl.classList.remove('drag-over');
-      });
-      draftEl.addEventListener('drop', (e) => {
-        e.preventDefault();
-        draftEl.classList.remove('drag-over');
-        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
-        const toIndex = i;
-        this.moveDraft(fromIndex, toIndex);
-      });
+        this.saveDraftsToLocalStorage();
+    }
 
-      this.draftsList.appendChild(draftEl);
-    });
-  }
-  moveDraft(from, to) {
-    if (from === to) return;
-    const draft = this.drafts.splice(from, 1)[0];
-    this.drafts.splice(to, 0, draft);
-    this.saveDraftsToLocalStorage();
-    this.renderDrafts();
-  }
-  saveDraftsToLocalStorage() {
-    try {
-      const serializableDrafts = this.drafts.map(draft => ({
-        ...draft,
-        createdAt: draft.createdAt instanceof Date ? draft.createdAt.toISOString() : draft.createdAt,
-        updatedAt: draft.updatedAt instanceof Date ? draft.updatedAt.toISOString() : draft.updatedAt,
-      }));
-      localStorage.setItem(this.localStorageKey, JSON.stringify(serializableDrafts));
-    } catch (err) {
-      // handle silently
-    }
-  }
-  loadDraftsFromLocalStorage() {
-    try {
-      const storedDrafts = localStorage.getItem(this.localStorageKey);
-      if (storedDrafts) {
-        this.drafts = JSON.parse(storedDrafts).map(draft => ({
-          ...draft,
-          createdAt: new Date(draft.createdAt),
-          updatedAt: new Date(draft.updatedAt)
-        }));
-        if (this.drafts.length > 0) {
-          this.currentDraftId = this.drafts[0].id;
-          this.draftTitle.value = this.drafts[0].title;
-          this.editor.innerHTML = this.drafts[0].content;
+    // Loads a draft by ID
+    loadDraft(id) {
+        const draft = this.drafts.find(d => d.id === id);
+        if (draft) {
+            this.currentDraftId = id;
+            this.draftTitle.value = draft.title;
+            this.editor.innerHTML = draft.content;
+            this.renderDrafts(); // Re-render to update active state
+            this.placeCursorAtEnd();
         }
-      }
-    } catch (err) {
-      // handle silently
     }
-  }
+
+    // Saves the current draft
+    saveDraft() {
+        if (!this.currentDraftId) return;
+        const draft = this.drafts.find(d => d.id === this.currentDraftId);
+        if (draft) {
+            const content = this.editor.innerHTML || '';
+            const textContent = this.editor.textContent || '';
+            draft.title = this.draftTitle.value || this.generateTitleFromContent(textContent);
+            draft.content = content;
+            draft.updatedAt = new Date().toISOString();
+            this.renderDrafts(); // Re-render to update metadata
+        }
+    }
+
+    // Generates a title from content if title is empty
+    generateTitleFromContent(content) {
+        if (!content.trim()) return 'Untitled Draft';
+        const firstLine = content.split('\n')[0] || '';
+        return firstLine.substring(0, 20) + (firstLine.length > 20 ? '...' : '') || 'Untitled Draft';
+    }
+
+    // Shows a confirmation modal
+    showConfirmationModal(message) {
+        return new Promise((resolve) => {
+            this.modalMessage.textContent = message;
+            this.confirmationModal.style.display = 'flex';
+
+            const confirmHandler = () => {
+                this.confirmationModal.style.display = 'none';
+                this.modalConfirmBtn.removeEventListener('click', confirmHandler);
+                this.modalCancelBtn.removeEventListener('click', cancelHandler);
+                resolve(true);
+            };
+
+            const cancelHandler = () => {
+                this.confirmationModal.style.display = 'none';
+                this.modalConfirmBtn.removeEventListener('click', confirmHandler);
+                this.modalCancelBtn.removeEventListener('click', cancelHandler);
+                resolve(false);
+            };
+
+            this.modalConfirmBtn.addEventListener('click', confirmHandler);
+            this.modalCancelBtn.addEventListener('click', cancelHandler);
+        });
+    }
+
+    // Deletes a draft
+    async deleteDraft(id) {
+        const confirmed = await this.showConfirmationModal('Are you sure you want to delete this draft?');
+        if (confirmed) {
+            this.drafts = this.drafts.filter(d => d.id !== id);
+            if (this.currentDraftId === id) {
+                if (this.drafts.length > 0) {
+                    this.loadDraft(this.drafts[0].id);
+                } else {
+                    this.createNewDraft(); // Create a new empty draft if all are deleted
+                }
+            }
+            this.renderDrafts();
+            this.saveDraftsToLocalStorage();
+        }
+    }
+
+    // Renders all drafts in the list
+    renderDrafts() {
+        this.draftsList.innerHTML = '';
+        if (this.drafts.length === 0) {
+            this.draftsList.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 2rem;">No drafts</div>';
+            return;
+        }
+
+        this.drafts.forEach(draft => {
+            const draftEl = document.createElement('div');
+            draftEl.className = `draft-item ${draft.id === this.currentDraftId ? 'active' : ''}`;
+            draftEl.draggable = true; // Make draggable
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = draft.content;
+            const textContent = tempDiv.textContent || tempDiv.innerText || '';
+            const displayTitle = draft.title || this.generateTitleFromContent(textContent);
+            const preview = textContent.substring(0, 50) + (textContent.length > 50 ? '...' : '');
+
+            draftEl.innerHTML = `
+                <div class="draft-info">
+                    <div class="draft-title">${displayTitle}</div>
+                    <div class="draft-preview">${preview || 'Empty draft'}</div>
+                </div>
+                <div class="draft-actions">
+                    <button class="draft-btn" data-action="delete" data-id="${draft.id}">Delete</button>
+                </div>
+            `;
+
+            // Open draft on clicking anywhere in draft-info
+            draftEl.querySelector('.draft-info').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.loadDraft(draft.id);
+            });
+
+            const deleteBtn = draftEl.querySelector('[data-action="delete"]');
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteDraft(parseInt(e.target.dataset.id));
+            });
+
+            // Drag and drop event listeners
+            draftEl.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', draft.id);
+                draftEl.classList.add('dragging');
+            });
+
+            draftEl.addEventListener('dragend', () => {
+                draftEl.classList.remove('dragging');
+            });
+
+            this.draftsList.appendChild(draftEl);
+        });
+
+        // Add drag over and drop listeners to the list itself
+        this.draftsList.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Allow drop
+            const draggingItem = document.querySelector('.draft-item.dragging');
+            if (draggingItem) {
+                const afterElement = this.getDragAfterElement(this.draftsList, e.clientY);
+                if (afterElement == null) {
+                    this.draftsList.appendChild(draggingItem);
+                } else {
+                    this.draftsList.insertBefore(draggingItem, afterElement);
+                }
+            }
+        });
+
+        this.draftsList.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const draggedId = parseInt(e.dataTransfer.getData('text/plain'));
+            const draggedDraft = this.drafts.find(d => d.id === draggedId);
+            if (draggedDraft) {
+                const newDrafts = Array.from(this.draftsList.children)
+                    .map(item => this.drafts.find(d => d.id === parseInt(item.querySelector('.draft-info').parentElement.dataset.id)));
+                this.drafts = newDrafts.filter(Boolean); // Filter out any nulls if an item couldn't be found
+                this.saveDraftsToLocalStorage();
+            }
+        });
+    }
+
+    // Helper for drag and drop to find the element to drop after
+    getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.draft-item:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: -Infinity }).element;
+    }
+
+    // Saves drafts to local storage
+    saveDraftsToLocalStorage() {
+        try {
+            const serializableDrafts = this.drafts.map(draft => ({
+                ...draft,
+                createdAt: draft.createdAt instanceof Date ? draft.createdAt.toISOString() : draft.createdAt,
+                updatedAt: draft.updatedAt instanceof Date ? draft.updatedAt.toISOString() : draft.updatedAt
+            }));
+            localStorage.setItem(this.localStorageKey, JSON.stringify(serializableDrafts));
+            console.log("Drafts saved to localStorage ✅");
+        } catch (e) {
+            console.error("Bro, couldn't save drafts to localStorage:", e);
+        }
+    }
+
+    // Loads drafts from local storage
+    loadDraftsFromLocalStorage() {
+        try {
+            const storedDrafts = localStorage.getItem(this.localStorageKey);
+            if (storedDrafts) {
+                this.drafts = JSON.parse(storedDrafts).map(draft => ({
+                    ...draft,
+                    createdAt: new Date(draft.createdAt),
+                    updatedAt: new Date(draft.updatedAt)
+                }));
+                console.log("Drafts loaded from localStorage ✨");
+            }
+        } catch (e) {
+            console.error("Yo, failed to load drafts from localStorage:", e);
+        }
+    }
+
+    // Default settings
+    settings = {
+        useOpenDyslexic: true,
+        lightMode: false,
+    };
+
+    // Save settings to local storage
+    saveSettingsToLocalStorage() {
+        try {
+            localStorage.setItem('markdownEditorSettings', JSON.stringify(this.settings));
+            console.log("Settings saved to localStorage ⚙️");
+        } catch (e) {
+            console.error("Couldn't save settings to localStorage:", e);
+        }
+    }
+
+    // Load settings from local storage
+    loadSettingsFromLocalStorage() {
+        try {
+            const storedSettings = localStorage.getItem('markdownEditorSettings');
+            if (storedSettings) {
+                this.settings = { ...this.settings, ...JSON.parse(storedSettings) };
+                console.log("Settings loaded from localStorage 🚀");
+            }
+        } catch (e) {
+            console.error("Failed to load settings from localStorage:", e);
+        }
+    }
+
+    // Apply settings to the UI
+    applySettings() {
+        // Apply font setting
+        document.body.style.fontFamily = this.settings.useOpenDyslexic ? "'OpenDyslexic', Arial, sans-serif" : "Arial, sans-serif";
+        this.toggleOpenDyslexic.checked = this.settings.useOpenDyslexic;
+
+        // Apply theme setting
+        if (this.settings.lightMode) {
+            document.body.classList.add('light-mode');
+        } else {
+            document.body.classList.remove('light-mode');
+        }
+        this.toggleLightMode.checked = this.settings.lightMode;
+    }
+
+    // Download functionality
+    downloadContent(format) {
+        const currentDraft = this.drafts.find(d => d.id === this.currentDraftId);
+        if (!currentDraft) {
+            this.showConfirmationModal("No draft selected to download, fam.");
+            return;
+        }
+
+        let filename = (currentDraft.title || 'untitled').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        let content = '';
+        let mimeType = '';
+
+        switch (format) {
+            case 'md':
+                content = this.convertHtmlToMarkdown(currentDraft.content);
+                mimeType = 'text/markdown';
+                filename += '.md';
+                break;
+            case 'html':
+                content = currentDraft.content; // Directly use the innerHTML
+                mimeType = 'text/html';
+                filename += '.html';
+                break;
+            case 'txt':
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = currentDraft.content;
+                content = tempDiv.textContent || tempDiv.innerText || '';
+                mimeType = 'text/plain';
+                filename += '.txt';
+                break;
+            default:
+                console.warn('Unsupported download format:', format);
+                return;
+        }
+
+        const blob = new Blob([content], { type: mimeType });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href); // Clean up URL object
+    }
+
+    // Basic HTML to Markdown conversion (can be expanded)
+    convertHtmlToMarkdown(html) {
+        let markdown = html;
+
+        // Convert headings
+        markdown = markdown.replace(/<h1>(.*?)<\/h1>/g, '# $1\n');
+        markdown = markdown.replace(/<h2>(.*?)<\/h2>/g, '## $1\n');
+        markdown = markdown.replace(/<h3>(.*?)<\/h3>/g, '### $1\n');
+        markdown = markdown.replace(/<h4>(.*?)<\/h4>/g, '#### $1\n');
+        markdown = markdown.replace(/<h5>(.*?)<\/h5>/g, '##### $1\n');
+        markdown = markdown.replace(/<h6>(.*?)<\/h6>/g, '###### $1\n');
+
+        // Convert bold
+        markdown = markdown.replace(/<strong>(.*?)<\/strong>/g, '**$1**');
+        markdown = markdown.replace(/<b>(.*?)<\/b>/g, '**$1**');
+
+        // Convert italic
+        markdown = markdown.replace(/<em>(.*?)<\/em>/g, '*$1*');
+        markdown = markdown.replace(/<i>(.*?)<\/i>/g, '*$1*');
+
+        // Convert blockquotes
+        markdown = markdown.replace(/<blockquote>(.*?)<\/blockquote>/g, (match, p1) => {
+            return p1.split('\n').map(line => `> ${line.trim()}`).join('\n') + '\n';
+        });
+
+        // Convert code blocks
+        markdown = markdown.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, '```\n$1\n```\n');
+        markdown = markdown.replace(/<code>(.*?)<\/code>/g, '`$1`');
+
+        // Convert links
+        markdown = markdown.replace(/<a href="(.*?)">(.*?)<\/a>/g, '[$2]($1)');
+
+        // Convert lists (basic)
+        markdown = markdown.replace(/<ul>(.*?)<\/ul>/gs, (match, p1) => {
+            return p1.replace(/<li>(.*?)<\/li>/g, '- $1\n');
+        });
+        markdown = markdown.replace(/<ol>(.*?)<\/ol>/gs, (match, p1) => {
+            let counter = 1;
+            return p1.replace(/<li>(.*?)<\/li>/g, () => `${counter++}. ` + '$1\n');
+        });
+
+        // Replace <br> with newlines
+        markdown = markdown.replace(/<br\s*\/?>/g, '\n');
+
+        // Remove extra newlines and trim
+        markdown = markdown.replace(/\n\s*\n/g, '\n\n').trim();
+
+        return markdown;
+    }
 }
+
 document.addEventListener('DOMContentLoaded', () => {
-  new LiveMarkdownEditor();
+    const editor = new LiveMarkdownEditor();
 });
 </script>
 </body>
