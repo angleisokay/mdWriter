@@ -1033,7 +1033,8 @@ class LiveMarkdownEditor {
         this.drafts.forEach(draft => {
             const draftEl = document.createElement('div');
             draftEl.className = `draft-item ${draft.id === this.currentDraftId ? 'active' : ''}`;
-            draftEl.draggable = true; // Make draggable
+            draftEl.draggable = true;
+            draftEl.dataset.id = draft.id; // Set data-id directly on the draggable element
 
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = draft.content;
@@ -1053,7 +1054,7 @@ class LiveMarkdownEditor {
 
             // Open draft on clicking anywhere in draft-info
             draftEl.querySelector('.draft-info').addEventListener('click', (e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // Stop propagation for the info area, to not interfere with potential parent listeners if any.
                 this.loadDraft(draft.id);
             });
 
@@ -1095,10 +1096,21 @@ class LiveMarkdownEditor {
             const draggedId = parseInt(e.dataTransfer.getData('text/plain'));
             const draggedDraft = this.drafts.find(d => d.id === draggedId);
             if (draggedDraft) {
-                const newDrafts = Array.from(this.draftsList.children)
-                    .map(item => this.drafts.find(d => d.id === parseInt(item.querySelector('.draft-info').parentElement.dataset.id)));
-                this.drafts = newDrafts.filter(Boolean); // Filter out any nulls if an item couldn't be found
-                this.saveDraftsToLocalStorage();
+                // Get the new order of draft IDs from the DOM
+                const newOrderIds = Array.from(this.draftsList.children).map(item => parseInt(item.dataset.id));
+
+                // Reconstruct this.drafts based on the new order
+                const reorderedDrafts = [];
+                for (const id of newOrderIds) {
+                    const foundDraft = this.drafts.find(d => d.id === id);
+                    if (foundDraft) {
+                        reorderedDrafts.push(foundDraft);
+                    }
+                }
+                this.drafts = reorderedDrafts;
+                this.saveDraftsToLocalStorage(); // Save the new order
+                // No need to call renderDrafts here as the DOM is already updated by dragover
+                // and the save will trigger a re-render if using onSnapshot, but for localStorage, it's already there.
             }
         });
     }
@@ -1129,7 +1141,7 @@ class LiveMarkdownEditor {
             localStorage.setItem(this.localStorageKey, JSON.stringify(serializableDrafts));
             console.log("Drafts saved to localStorage ✅");
         } catch (e) {
-            console.error("Bro, couldn't save drafts to localStorage:", e);
+            console.error("Failed to save drafts to localStorage:", e);
         }
     }
 
@@ -1146,7 +1158,7 @@ class LiveMarkdownEditor {
                 console.log("Drafts loaded from localStorage ✨");
             }
         } catch (e) {
-            console.error("Yo, failed to load drafts from localStorage:", e);
+            console.error("Failed to load drafts from localStorage:", e);
         }
     }
 
@@ -1198,7 +1210,7 @@ class LiveMarkdownEditor {
     downloadContent(format) {
         const currentDraft = this.drafts.find(d => d.id === this.currentDraftId);
         if (!currentDraft) {
-            this.showConfirmationModal("No draft selected to download, fam.");
+            this.showConfirmationModal("No draft selected to download.");
             return;
         }
 
