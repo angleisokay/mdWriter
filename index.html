@@ -190,6 +190,7 @@
     transition: padding-left 0.2s;
     height: 100vh;
     box-sizing: border-box;
+    position: relative;
   }
   .options-panel:not(.open) ~ .editor-container {
     padding-left: 2rem;
@@ -220,6 +221,9 @@
     pointer-events: none;
     font-style: italic;
     color: #8e8e8e;
+  }
+  .editor-content [data-color] {
+    color: attr(data-color color, #181818);
   }
 
   /* --- Formatting Toolbar --- */
@@ -359,6 +363,79 @@
     font-weight: bold !important;
     font-family: var(--editor-font) !important;
   }
+
+  /* --- Search/Replace Modal --- */
+  .search-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    background: rgba(0,0,0,0.12);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+  }
+  .search-modal.active {
+    display: flex;
+  }
+  .search-modal-content {
+    background: #fff;
+    border-radius: 9px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+    min-width: 320px;
+    padding: 2rem 2.2rem 1.5rem 2.2rem;
+    text-align: center;
+  }
+  .search-modal-content input[type="text"] {
+    width: 80%;
+    font-size: 1.1rem;
+    margin-bottom: 0.7rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 5px;
+    border: 1px solid #e0e0e0;
+    margin-top: 0.25rem;
+  }
+  .search-actions {
+    margin-top: 0.8rem;
+    display: flex;
+    gap: 0.7rem;
+    justify-content: center;
+    align-items: center;
+  }
+  .search-actions button {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: none;
+    background: #2679e8;
+    color: #fff;
+    font-size: 0.97rem;
+    cursor: pointer;
+    transition: background 0.17s;
+  }
+  .search-actions button:hover { background: #1656b7; }
+  .search-actions .secondary {
+    background: #eaeaea;
+    color: #222;
+  }
+
+  /* --- Import Button --- */
+  .import-btn {
+    display: inline-block;
+    margin-right: 0.5em;
+    background: #eaeaea;
+    color: #222;
+    padding: 0.5rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.14s;
+  }
+  .import-btn:hover {
+    background: #d2e3fa;
+    color: #1867b7;
+  }
 </style>
 </head>
 <body>
@@ -408,6 +485,11 @@
     </div>
   </div>
   <div class="editor-container">
+    <div style="display:flex; align-items: center; gap: 0.5em; margin-bottom: 0.7em; position: absolute; right: 2.5em; top: 1em; z-index: 100;">
+      <button class="import-btn" id="importBtn"><i class="fas fa-file-import"></i> Import</button>
+      <button class="import-btn" id="searchBtn"><i class="fas fa-search"></i> Search</button>
+      <input type="file" id="importInput" accept=".md,.txt,.html" style="display:none">
+    </div>
     <div class="editor-content" id="editor" contenteditable="true"></div>
   </div>
 </div>
@@ -420,6 +502,7 @@
   <button data-format="blockquote"><i class="fas fa-quote-right"></i></button>
   <button data-format="code"><i class="fas fa-code"></i></button>
   <button data-format="link"><i class="fas fa-link"></i></button>
+  <button data-format="color"><i class="fas fa-palette"></i></button>
 </div>
 <div id="confirmationModal" class="modal">
   <div class="modal-content">
@@ -430,6 +513,28 @@
     </div>
   </div>
 </div>
+
+<!-- Search/Replace Modal -->
+<div class="search-modal" id="searchModal">
+  <div class="search-modal-content">
+    <div>
+      <label for="searchInput"><strong>Find</strong></label><br>
+      <input type="text" id="searchInput" autocomplete="off" placeholder="Find...">
+    </div>
+    <div style="margin-top:0.8em;">
+      <label for="replaceInput"><strong>Replace</strong></label><br>
+      <input type="text" id="replaceInput" autocomplete="off" placeholder="Replace with...">
+    </div>
+    <div class="search-actions">
+      <button id="findNextBtn">Find Next</button>
+      <button id="replaceBtn">Replace</button>
+      <button id="replaceAllBtn">Replace All</button>
+      <button class="secondary" id="closeSearchModalBtn">Close</button>
+    </div>
+    <div style="margin-top:0.7em; font-size:0.95em;" id="searchCount"></div>
+  </div>
+</div>
+
 <script>
 class LiveMarkdownEditor {
   constructor() {
@@ -443,6 +548,10 @@ class LiveMarkdownEditor {
     this.applySettingsFromLocalStorage();
     this.renderDrafts();
     this.setEditorStyles();
+    this.initCustomMarkdownColors();
+    this.searchIndex = -1;
+    this.searchMatches = [];
+    this.lastSearchTerm = '';
   }
   initElements() {
     this.editor = document.getElementById('editor');
@@ -462,6 +571,17 @@ class LiveMarkdownEditor {
     this.colorValue = document.getElementById('colorValue');
     this.openDyslexicToggle = document.getElementById('openDyslexicToggle');
     this.fontToggleLabel = document.getElementById('fontToggleLabel');
+    this.importBtn = document.getElementById('importBtn');
+    this.importInput = document.getElementById('importInput');
+    this.searchBtn = document.getElementById('searchBtn');
+    this.searchModal = document.getElementById('searchModal');
+    this.searchInput = document.getElementById('searchInput');
+    this.replaceInput = document.getElementById('replaceInput');
+    this.findNextBtn = document.getElementById('findNextBtn');
+    this.replaceBtn = document.getElementById('replaceBtn');
+    this.replaceAllBtn = document.getElementById('replaceAllBtn');
+    this.closeSearchModalBtn = document.getElementById('closeSearchModalBtn');
+    this.searchCount = document.getElementById('searchCount');
   }
   bindEvents() {
     document.addEventListener('click', (e) => {
@@ -491,12 +611,23 @@ class LiveMarkdownEditor {
       localStorage.setItem('mdw_opendyslexic', this.openDyslexicToggle.checked ? 'on' : 'off');
       this.fontToggleLabel.textContent = this.openDyslexicToggle.checked ? 'Enabled' : 'Disabled';
       this.setEditorStyles();
+      this.applyFontToDocument();
     });
     this.draftTitle.addEventListener('input', () => this.scheduleAutoSave());
     this.newDraftBtn.addEventListener('click', () => this.createNewDraft());
-    this.editor.addEventListener('input', () => this.scheduleAutoSave());
+    this.editor.addEventListener('input', () => {
+      this.scheduleAutoSave();
+      this.updateCustomColorSpans();
+      // remove search highlights if editing
+      if (this.searchModal.classList.contains('active')) {
+        this.clearSearchHighlights();
+        this.updateSearchMatches();
+      }
+    });
     this.editor.addEventListener('mouseup', () => this.handleSelectionChange());
-    this.editor.addEventListener('keyup', () => this.handleSelectionChange());
+    this.editor.addEventListener('keyup', (e) => {
+      this.handleSelectionChange();
+    });
     document.addEventListener('selectionchange', () => this.handleSelectionChange());
     document.addEventListener('scroll', () => this.hideToolbar());
     document.addEventListener('mousedown', (e) => {
@@ -506,8 +637,14 @@ class LiveMarkdownEditor {
       e.preventDefault();
     });
     this.formattingToolbar.addEventListener('click', (e) => {
-      if (e.target.closest('button')) {
-        this.applyFormat(e.target.closest('button').dataset.format);
+      const btn = e.target.closest('button');
+      if (btn) {
+        const format = btn.dataset.format;
+        if (format === 'color') {
+          this.openColorPrompt();
+        } else {
+          this.applyFormat(format);
+        }
         this.hideToolbar();
       }
     });
@@ -518,6 +655,48 @@ class LiveMarkdownEditor {
     this.modalCancelBtn.addEventListener('click', () => {
       this.modalPromiseResolve(false);
       this.confirmationModal.style.display = 'none';
+    });
+    // Import/Export
+    this.importBtn.addEventListener('click', () => {
+      this.importInput.value = '';
+      this.importInput.click();
+    });
+    this.importInput.addEventListener('change', (e) => {
+      if (this.importInput.files && this.importInput.files.length > 0) {
+        const file = this.importInput.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          this.importFileContent(ev.target.result, file.name);
+        };
+        reader.readAsText(file);
+      }
+    });
+    // Search/Replace Modal
+    this.searchBtn.addEventListener('click', () => {
+      this.showSearchModal();
+    });
+    this.closeSearchModalBtn.addEventListener('click', () => {
+      this.hideSearchModal();
+    });
+    this.findNextBtn.addEventListener('click', () => {
+      this.findNext();
+    });
+    this.replaceBtn.addEventListener('click', () => {
+      this.replaceCurrent();
+    });
+    this.replaceAllBtn.addEventListener('click', () => {
+      this.replaceAll();
+    });
+    this.searchInput.addEventListener('input', () => {
+      this.updateSearchMatches();
+    });
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !this.searchModal.classList.contains('active')) {
+        e.preventDefault();
+        this.showSearchModal();
+      } else if (e.key === "Escape" && this.searchModal.classList.contains('active')) {
+        this.hideSearchModal();
+      }
     });
   }
   setEditorStyles() {
@@ -532,6 +711,22 @@ class LiveMarkdownEditor {
     document.documentElement.style.setProperty('--editor-font',
       useDyslexic ? "'OpenDyslexic', Arial, sans-serif" : "Arial, sans-serif"
     );
+    this.applyFontToDocument();
+  }
+  applyFontToDocument() {
+    // Actually applies the font to the document (editor content)
+    // Only target the content inside the editor, not the UI
+    if (this.openDyslexicToggle.checked) {
+      this.editor.classList.add('dyslexic-font');
+      this.editor.style.fontFamily = "'OpenDyslexic', Arial, sans-serif";
+    } else {
+      this.editor.classList.remove('dyslexic-font');
+      this.editor.style.fontFamily = "Arial, sans-serif";
+    }
+    // Also update children spans that may have inherited previous font
+    for (const el of this.editor.querySelectorAll('[data-color]')) {
+      el.style.fontFamily = this.editor.style.fontFamily;
+    }
   }
   applySettingsFromLocalStorage() {
     if (localStorage.getItem('mdw_zoom')) {
@@ -549,22 +744,31 @@ class LiveMarkdownEditor {
     this.setEditorStyles();
   }
   handleSelectionChange() {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return this.hideToolbar();
-    const range = selection.getRangeAt(0);
-    if (!selection.isCollapsed && this.editor.contains(range.startContainer) && this.editor.contains(range.endContainer)) {
-      const rect = range.getBoundingClientRect();
-      let toolbarLeft = rect.left + window.scrollX - this.formattingToolbar.offsetWidth / 2 + rect.width / 2;
-      let toolbarTop = rect.top + window.scrollY - this.formattingToolbar.offsetHeight - 10;
-      if (toolbarLeft < window.scrollX + 10) toolbarLeft = window.scrollX + 10;
-      if (toolbarLeft + this.formattingToolbar.offsetWidth > window.innerWidth - 10)
-        toolbarLeft = window.innerWidth - this.formattingToolbar.offsetWidth - 10;
-      this.formattingToolbar.style.display = 'flex';
-      this.formattingToolbar.style.left = `${toolbarLeft}px`;
-      this.formattingToolbar.style.top = `${toolbarTop}px`;
-    } else {
-      this.hideToolbar();
-    }
+    // Delay before showing toolbar to avoid double-click accidental tap
+    clearTimeout(this.toolbarShowTimeout);
+    this.toolbarShowTimeout = setTimeout(() => {
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return this.hideToolbar();
+      const range = selection.getRangeAt(0);
+      if (!selection.isCollapsed && this.editor.contains(range.startContainer) && this.editor.contains(range.endContainer)) {
+        const rect = range.getBoundingClientRect();
+        let toolbarLeft = rect.left + window.scrollX - this.formattingToolbar.offsetWidth / 2 + rect.width / 2;
+        let toolbarTop = rect.bottom + window.scrollY + 8; // Show BELOW selection
+        // Clamp within window
+        if (toolbarLeft < window.scrollX + 10) toolbarLeft = window.scrollX + 10;
+        if (toolbarLeft + this.formattingToolbar.offsetWidth > window.innerWidth - 10)
+          toolbarLeft = window.innerWidth - this.formattingToolbar.offsetWidth - 10;
+        // If too far down, show above as fallback
+        if (toolbarTop + this.formattingToolbar.offsetHeight > window.innerHeight - 20) {
+          toolbarTop = rect.top + window.scrollY - this.formattingToolbar.offsetHeight - 8;
+        }
+        this.formattingToolbar.style.display = 'flex';
+        this.formattingToolbar.style.left = `${toolbarLeft}px`;
+        this.formattingToolbar.style.top = `${toolbarTop}px`;
+      } else {
+        this.hideToolbar();
+      }
+    }, 80);
   }
   hideToolbar() {
     this.formattingToolbar.style.display = 'none';
@@ -602,6 +806,37 @@ class LiveMarkdownEditor {
         break;
     }
     this.scheduleAutoSave();
+  }
+  openColorPrompt() {
+    // Open a prompt for color hex, then wrap selected text with <span data-color="#hex">
+    setTimeout(() => {
+      let color = prompt('Enter hex color (e.g. #ed6e0c):', '#');
+      if (!color || !/^#([0-9a-fA-F]{3,8})$/.test(color.trim())) {
+        return;
+      }
+      color = color.trim();
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return;
+      const range = selection.getRangeAt(0);
+      if (!range || range.collapsed) return;
+      // Wrap in span
+      const span = document.createElement('span');
+      span.setAttribute('data-color', color);
+      span.style.color = color;
+      // Fix font for OpenDyslexic
+      span.style.fontFamily = this.openDyslexicToggle.checked
+        ? "'OpenDyslexic', Arial, sans-serif"
+        : "Arial, sans-serif";
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+      // Move cursor after span
+      selection.removeAllRanges();
+      const newRange = document.createRange();
+      newRange.setStartAfter(span);
+      newRange.collapse(true);
+      selection.addRange(newRange);
+      this.scheduleAutoSave();
+    }, 50);
   }
   toggleCode() {
     const selection = window.getSelection();
@@ -672,6 +907,7 @@ class LiveMarkdownEditor {
       this.currentDraftId = id;
       this.draftTitle.value = draft.title;
       this.editor.innerHTML = draft.content;
+      this.updateCustomColorSpans();
       this.renderDrafts();
       this.placeCursorAtEnd();
     }
@@ -815,11 +1051,224 @@ class LiveMarkdownEditor {
           this.currentDraftId = this.drafts[0].id;
           this.draftTitle.value = this.drafts[0].title;
           this.editor.innerHTML = this.drafts[0].content;
+          this.updateCustomColorSpans();
         }
       }
     } catch (err) {
       // handle silently
     }
+  }
+  // --- Custom Markdown Color Syntax ---
+  initCustomMarkdownColors() {
+    this.updateCustomColorSpans();
+  }
+  updateCustomColorSpans() {
+    // Convert <#hex>text</> in editor to <span data-color="#hex">text</span>
+    if (!this.editor) return;
+    // Only if actually .innerHTML uses the custom syntax (not inside tags)
+    let html = this.editor.innerHTML;
+    // Replace only outside tags (not already inside span)
+    // Regex: <#([0-9a-fA-F]{3,8})>((?:(?!<\/>).)*?)<\/>
+    html = html.replace(/&lt;#([0-9a-fA-F]{3,8})&gt;([\s\S]*?)&lt;\/&gt;/g, (m, hex, text) =>
+      `<span data-color="#${hex}" style="color:#${hex};">${text}</span>`
+    );
+    html = html.replace(/<#([0-9a-fA-F]{3,8})>([\s\S]*?)<\/>/g, (m, hex, text) =>
+      `<span data-color="#${hex}" style="color:#${hex};">${text}</span>`
+    );
+    // If html changed, update and keep caret
+    if (html !== this.editor.innerHTML) {
+      const sel = window.getSelection();
+      const pos = sel.anchorOffset;
+      this.editor.innerHTML = html;
+      this.restoreCaret(pos);
+    }
+    // Enforce font family on color spans
+    for (const el of this.editor.querySelectorAll('[data-color]')) {
+      el.style.fontFamily = this.openDyslexicToggle.checked
+        ? "'OpenDyslexic', Arial, sans-serif"
+        : "Arial, sans-serif";
+    }
+  }
+  restoreCaret(pos) {
+    // (Simple restore for single node)
+    try {
+      const selection = window.getSelection();
+      if (this.editor.childNodes.length === 0) return;
+      let node = this.editor.childNodes[0];
+      let offset = Math.min(pos, node.textContent.length);
+      selection.removeAllRanges();
+      const range = document.createRange();
+      range.setStart(node, offset);
+      range.collapse(true);
+      selection.addRange(range);
+    } catch (e) {}
+  }
+  // --- Import .md/.txt/.html ---
+  importFileContent(content, filename) {
+    if (filename.endsWith('.md') || filename.endsWith('.txt')) {
+      // Treat as plain text, escape HTML, try to convert color syntax
+      // Convert <#hex>text</> to color spans
+      content = content.replace(/<#([0-9a-fA-F]{3,8})>([\s\S]*?)<\/>/g, (m, hex, text) =>
+        `<span data-color="#${hex}" style="color:#${hex};">${text}</span>`
+      );
+      // Escape lines except for our color spans
+      content = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      content = content.replace(/&lt;span data-color=/g, '<span data-color=').replace(/&lt;\/span&gt;/g, '</span>');
+      this.editor.innerHTML = content.replace(/\n/g, "<br>");
+    } else if (filename.endsWith('.html')) {
+      // Try to set as HTML, but only allow certain tags (whitelist)
+      // Whitelist: h1-h6, p, span[data-color], code, b, i, em, strong, blockquote, ul, ol, li, br
+      const temp = document.createElement('div');
+      temp.innerHTML = content;
+      // Remove scripts/styles
+      for (const script of temp.querySelectorAll('script,style')) script.remove();
+      // Remove all attributes except data-color and style for span, href for a
+      for (const el of temp.querySelectorAll('*')) {
+        if (el.tagName.toLowerCase() === 'span') {
+          for (const attr of Array.from(el.attributes)) {
+            if (attr.name !== 'data-color' && attr.name !== 'style') el.removeAttribute(attr.name);
+          }
+        } else if (el.tagName.toLowerCase() === 'a') {
+          for (const attr of Array.from(el.attributes)) {
+            if (attr.name !== 'href') el.removeAttribute(attr.name);
+          }
+        } else if (!['h1','h2','h3','h4','h5','h6','p','span','code','b','i','em','strong','blockquote','ul','ol','li','br','a'].includes(el.tagName.toLowerCase())) {
+          el.replaceWith(document.createTextNode(el.outerHTML));
+        }
+      }
+      this.editor.innerHTML = temp.innerHTML;
+    }
+    this.updateCustomColorSpans();
+    this.scheduleAutoSave();
+  }
+  // --- Search/Replace ---
+  showSearchModal() {
+    this.searchModal.classList.add('active');
+    setTimeout(() => this.searchInput.focus(), 70);
+    this.updateSearchMatches();
+  }
+  hideSearchModal() {
+    this.clearSearchHighlights();
+    this.searchModal.classList.remove('active');
+  }
+  updateSearchMatches() {
+    this.clearSearchHighlights();
+    this.searchIndex = -1;
+    this.searchMatches = [];
+    const searchVal = this.searchInput.value;
+    if (!searchVal) {
+      this.searchCount.textContent = '';
+      return;
+    }
+    // Search in plain text and mark matches in HTML
+    const walker = document.createTreeWalker(this.editor, NodeFilter.SHOW_TEXT, null, false);
+    let node, matches = [];
+    while ((node = walker.nextNode())) {
+      let idx = -1, from = 0;
+      const t = node.textContent;
+      while ((idx = t.toLowerCase().indexOf(searchVal.toLowerCase(), from)) !== -1) {
+        matches.push({
+          node,
+          start: idx,
+          end: idx+searchVal.length
+        });
+        from = idx + searchVal.length;
+      }
+    }
+    // Mark matches
+    for (let i = matches.length-1; i >= 0; --i) {
+      const m = matches[i];
+      const n = m.node;
+      const before = n.textContent.slice(0, m.start);
+      const match = n.textContent.slice(m.start, m.end);
+      const after = n.textContent.slice(m.end);
+      const span = document.createElement('span');
+      span.className = 'search-match';
+      span.style.background = '#ffe869';
+      span.textContent = match;
+      const frag = document.createDocumentFragment();
+      if (before) frag.appendChild(document.createTextNode(before));
+      frag.appendChild(span);
+      if (after) frag.appendChild(document.createTextNode(after));
+      n.parentNode.replaceChild(frag, n);
+    }
+    // Gather all spans
+    this.searchMatches = Array.from(this.editor.querySelectorAll('.search-match'));
+    this.searchCount.textContent = this.searchMatches.length
+      ? `Match ${this.searchIndex+1||1} of ${this.searchMatches.length}`
+      : 'No matches';
+    if (this.searchMatches.length) {
+      this.searchIndex = 0;
+      this.scrollToMatch(this.searchIndex);
+      this.highlightCurrentMatch();
+    }
+  }
+  clearSearchHighlights() {
+    // Remove all .search-match spans
+    const matches = this.editor.querySelectorAll('.search-match');
+    for (const match of matches) {
+      const text = document.createTextNode(match.textContent);
+      match.parentNode.replaceChild(text, match);
+    }
+  }
+  findNext() {
+    if (!this.searchMatches.length) return;
+    this.removeCurrentMatchHighlight();
+    this.searchIndex = (this.searchIndex + 1) % this.searchMatches.length;
+    this.scrollToMatch(this.searchIndex);
+    this.highlightCurrentMatch();
+    this.searchCount.textContent = `Match ${this.searchIndex+1} of ${this.searchMatches.length}`;
+  }
+  replaceCurrent() {
+    if (!this.searchMatches.length) return;
+    const span = this.searchMatches[this.searchIndex];
+    const replaceVal = this.replaceInput.value || '';
+    const text = document.createTextNode(replaceVal);
+    span.parentNode.replaceChild(text, span);
+    this.updateSearchMatches();
+  }
+  replaceAll() {
+    if (!this.searchMatches.length) return;
+    const replaceVal = this.replaceInput.value || '';
+    for (const span of this.searchMatches) {
+      const text = document.createTextNode(replaceVal);
+      span.parentNode.replaceChild(text, span);
+    }
+    this.updateSearchMatches();
+  }
+  scrollToMatch(index) {
+    if (!this.searchMatches.length) return;
+    const span = this.searchMatches[index];
+    span.scrollIntoView({block: "center", behavior: "smooth"});
+  }
+  highlightCurrentMatch() {
+    if (!this.searchMatches.length) return;
+    const span = this.searchMatches[this.searchIndex];
+    span.style.background = '#ffb969';
+  }
+  removeCurrentMatchHighlight() {
+    if (!this.searchMatches.length) return;
+    const span = this.searchMatches[this.searchIndex];
+    span.style.background = '#ffe869';
+  }
+  // --- Export (for color tags) ---
+  getExportedText(type='md') {
+    // Remove color spans for .md/.txt exports, replacing with just text
+    let html = this.editor.innerHTML;
+    // Remove <span data-color="#...">...</span>
+    html = html.replace(/<span data-color="#[0-9a-fA-F]{3,8}"[^>]*>([\s\S]*?)<\/span>/g, '$1');
+    if (type === 'txt') {
+      // Remove all tags
+      let div = document.createElement('div');
+      div.innerHTML = html;
+      return div.textContent;
+    } else if (type === 'md') {
+      // Could convert common blocks to markdown, but for now output text content
+      let div = document.createElement('div');
+      div.innerHTML = html;
+      return div.textContent;
+    }
+    return html;
   }
 }
 document.addEventListener('DOMContentLoaded', () => {
