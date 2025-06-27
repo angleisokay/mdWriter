@@ -1,144 +1,1918 @@
-<!doctype html>
-<html lang=en>
-<head>
-<meta charset=UTF-8>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<title>Markdown Editor</title>
-<link href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css rel=stylesheet>
-<style>@font-face{font-family:OpenDyslexic;src:url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Regular.otf') format('opentype');font-weight:400;font-style:normal}@font-face{font-family:OpenDyslexic;src:url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Bold.otf') format('opentype');font-weight:700;font-style:normal}@font-face{font-family:OpenDyslexic;src:url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Italic.otf') format('opentype');font-weight:400;font-style:italic}@font-face{font-family:OpenDyslexic;src:url('./opendyslexic-0.91.12/compiled/OpenDyslexic-Bold-Italic.otf') format('opentype');font-weight:700;font-style:italic}:root{--bg-primary:#0d1117;--bg-secondary:#161b22;--bg-tertiary:#21262d;--text-primary:#f0f6fc;--text-secondary:#7d8590;--accent:#58a6ff;--accent-hover:#388bfd;--border:#30363d;--success:#238636;--danger:#da3633;--font-family:Arial,sans-serif}body.light-mode{--bg-primary:#ffffff;--bg-secondary:#f6f8fa;--bg-tertiary:#e1e4e8;--text-primary:#24292e;--text-secondary:#586069;--accent:#0366d6;--accent-hover:#005cc5;--border:#d1d5da;--success:#28a745;--danger:#cb2431}*{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--font-family);background:var(--bg-primary);color:var(--text-primary);height:100vh;overflow:hidden;transition:background .3s ease,color .3s ease}body.use-opendyslexic{font-family:OpenDyslexic,Arial,sans-serif}.app-container{display:flex;height:100vh;position:relative}.menu-btn{position:fixed;top:20px;right:20px;z-index:1000;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:50%;cursor:pointer;font-size:16px;transition:all .2s ease;box-shadow:0 4px 12px rgba(0,0,0,.3);width:44px;height:44px;display:flex;align-items:center;justify-content:center}.menu-btn:hover{background:var(--accent);border-color:var(--accent)}.menu-dropdown{position:fixed;top:70px;right:20px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:1000;display:none;flex-direction:column;min-width:180px;padding:8px 0}.menu-dropdown.open{display:flex}.menu-dropdown button{background:0 0;border:none;color:var(--text-primary);padding:10px 15px;text-align:left;cursor:pointer;font-size:14px;transition:background .2s ease;display:flex;align-items:center;gap:10px}.menu-dropdown button:hover{background:var(--bg-tertiary)}.options-panel{position:fixed;top:0;right:-400px;width:400px;height:100vh;background:var(--bg-secondary);border-left:1px solid var(--border);transition:right .3s ease;z-index:999;display:flex;flex-direction:column;box-shadow:-4px 0 12px rgba(0,0,0,.3)}.options-panel.open{right:0}.options-header{padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}.options-content{flex:1;padding:20px;overflow-y:auto}.option-group{margin-bottom:24px}.option-label{display:block;margin-bottom:8px;font-weight:700;color:var(--text-primary)}.option-control{width:100%;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:12px;border-radius:6px;font-family:inherit;font-size:14px;transition:background .3s ease,border-color .3s ease,color .3s ease}.option-control:focus{outline:0;border-color:var(--accent)}.zoom-control{display:flex;align-items:center;gap:12px}.zoom-slider{flex:1;accent-color:var(--accent)}.zoom-value{min-width:50px;text-align:center;font-weight:700}.drafts-section{flex:1}.drafts-list{max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary)}.draft-item{padding:12px;border-bottom:1px solid var(--border);cursor:grab;transition:background .2s ease;position:relative}.draft-item:last-child{border-bottom:0}.draft-item:hover{background:var(--bg-primary)}.draft-item.active{background:var(--accent);color:#fff}.draft-item.dragging{opacity:.5;border:2px dashed var(--accent)}.draft-title{font-weight:700;margin-bottom:4px}.draft-preview{font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.draft-item.active .draft-preview{color:rgba(255,255,255,.8)}.draft-actions{margin-top:8px;display:flex;gap:8px;justify-content:flex-end}.draft-btn{background:var(--bg-primary);border:1px solid var(--border);color:var(--text-secondary);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:12px}.draft-btn:hover{color:var(--text-primary);border-color:var(--accent)}.btn{background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:12px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:14px;transition:all .2s ease}.btn:hover{background:var(--accent);border-color:var(--accent)}.btn.primary{background:var(--success);border-color:var(--success)}.btn.primary:hover{background:#2ea043}.editor-container{flex:1;display:flex;flex-direction:column;position:relative}.editor-content{flex:1;background:var(--bg-primary);color:var(--text-primary);border:0;padding:40px;font-family:inherit;font-size:16px;line-height:1.6;letter-spacing:0;outline:0;overflow-y:auto;min-height:100%;word-wrap:break-word;white-space:pre-wrap}.editor-content:empty::before{content:"Start typing here... Highlight text to format!";color:var(--text-secondary);font-style:italic}.editor-content h1{font-size:2em;font-weight:700;margin:.5em 0;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:.3em;display:block}.editor-content h2{font-size:1.7em;font-weight:700;margin:.5em 0;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:.2em;display:block}.editor-content h3{font-size:1.4em;font-weight:700;margin:.5em 0;color:var(--accent);display:block}.editor-content h4{font-size:1.2em;font-weight:700;margin:.5em 0;color:var(--accent);display:block}.editor-content h5{font-size:1.1em;font-weight:700;margin:.5em 0;color:var(--accent);display:block}.editor-content h6{font-size:1em;font-weight:700;margin:.5em 0;color:var(--accent);display:block}.editor-content strong{font-weight:700;color:var(--text-primary)}.editor-content em{font-style:italic;color:#ffa657}.editor-content code{background:var(--bg-tertiary);padding:2px 6px;border-radius:4px;font-family:'Courier New',monospace;font-size:.9em;color:#f97583}.editor-content pre{background:var(--bg-tertiary);padding:16px;border-radius:8px;margin:1em 0;overflow-x:auto;font-family:'Courier New',monospace;font-size:.9em;color:#f97583}.editor-content blockquote{border-left:4px solid var(--accent);padding-left:16px;margin:1em 0;color:var(--text-secondary);font-style:italic;background:rgba(88,166,255,.05);padding:16px;border-radius:0 6px 6px 0;display:block}.editor-content ol,.editor-content ul{padding-left:24px;margin:1em 0}.editor-content li{margin:.5em 0}.markdown-syntax{color:var(--text-secondary);font-size:.8em}.modal{display:none;position:fixed;z-index:1001;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.6);justify-content:center;align-items:center}.modal-content{background-color:var(--bg-secondary);margin:auto;padding:20px;border:1px solid var(--border);border-radius:8px;width:80%;max-width:400px;box-shadow:0 5px 15px rgba(0,0,0,.5);text-align:center}.modal-content p{margin-bottom:20px;color:var(--text-primary)}.modal-buttons{display:flex;justify-content:space-around;gap:10px;margin-top:20px}.modal-buttons button{flex:1;padding:10px 15px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:14px;transition:background .2s ease}.modal-buttons .confirm-btn{background-color:var(--danger);color:#fff;border:1px solid var(--danger)}.modal-buttons .confirm-btn:hover{background-color:#b32d2c}.modal-buttons .cancel-btn{background-color:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border)}.modal-buttons .cancel-btn:hover{background-color:var(--bg-primary)}.formatting-toolbar{display:none;position:absolute;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:1000;gap:5px;flex-wrap:wrap;align-items:center}.formatting-toolbar button,.formatting-toolbar input[type=color]{background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:5px;cursor:pointer;font-size:14px;transition:background .2s,border-color .2s;-webkit-appearance:none;-moz-appearance:none;appearance:none;width:40px;height:40px;padding:0}.formatting-toolbar button:hover,.formatting-toolbar input[type=color]:hover{background:var(--accent);border-color:var(--accent)}.formatting-toolbar input[type=color]::-webkit-color-swatch-wrapper{padding:0}.formatting-toolbar input[type=color]::-webkit-color-swatch{border:none;border-radius:4px}.formatting-toolbar input[type=color]::-moz-color-swatch-wrapper{padding:0}.formatting-toolbar input[type=color]::-moz-color-swatch{border:none;border-radius:4px}.search-replace-bar{position:absolute;bottom:0;left:0;right:0;background:var(--bg-secondary);border-top:1px solid var(--border);padding:10px 20px;display:flex;gap:10px;align-items:center;z-index:990;transform:translateY(100%);transition:transform .3s ease-out}.search-replace-bar.open{transform:translateY(0)}.search-replace-bar input{flex:1;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:6px;font-family:inherit;font-size:14px}.search-replace-bar button{background:var(--accent);border:1px solid var(--accent);color:#fff;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:14px;transition:background .2s ease}.search-replace-bar button:hover{background:var(--accent-hover);border-color:var(--accent-hover)}.search-replace-bar .close-btn{background:0 0;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer;padding:0 5px}.search-replace-bar .close-btn:hover{color:var(--text-primary)}.highlight{background-color:rgba(255,255,0,.5);border-radius:2px}#fileInput{display:none}.embed-container{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:1em auto;position:relative;padding-bottom:56.25%;height:0;max-width:100%;background-color:var(--bg-tertiary);display:flex;justify-content:center;align-items:center;clear:both}.embed-container iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}.embed-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;cursor:pointer;font-size:1.2em;text-align:center}.embed-overlay .play-button{font-size:3em;margin-bottom:10px}.embed-overlay:hover{background:rgba(0,0,0,.5)}.embed-controls{position:absolute;top:10px;right:10px;z-index:10;display:flex;gap:8px;opacity:0;transform:translateY(-20px);transition:opacity .3s ease,transform .3s ease}.embed-controls button{background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:5px;padding:5px 10px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:5px}.embed-controls button:hover{background:rgba(0,0,0,.8)}.fullscreen-modal{display:none;position:fixed;z-index:2000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.9);justify-content:center;align-items:center}.fullscreen-modal.active{display:flex}.fullscreen-modal iframe{width:90%;height:90%;border:none}.fullscreen-modal .close-fullscreen{position:absolute;top:20px;right:30px;color:#fff;font-size:40px;font-weight:700;cursor:pointer}.add-embed-modal .modal-content{max-width:500px;text-align:left}.add-embed-modal .modal-content label{display:block;margin-bottom:5px;font-weight:700}.add-embed-modal .modal-content input[type=number],.add-embed-modal .modal-content input[type=text],.add-embed-modal .modal-content select{width:calc(100% - 24px);padding:10px 12px;margin-bottom:15px;border:1px solid var(--border);border-radius:6px;background-color:var(--bg-tertiary);color:var(--text-primary);font-size:14px}.add-embed-modal .modal-content input[type=number]{width:calc(50% - 17px);display:inline-block;margin-right:10px}.add-embed-modal .modal-content input[type=number]:last-of-type{margin-right:0}.add-embed-modal .preview-area{border:1px solid var(--border);border-radius:6px;min-height:150px;background-color:var(--bg-primary);display:flex;justify-content:center;align-items:center;color:var(--text-secondary);overflow:hidden;position:relative;margin-bottom:15px}.add-embed-modal .preview-area iframe{width:100%;height:100%;position:absolute;top:0;left:0;border:none}.add-embed-modal .preview-area p{text-align:center;margin:0;padding:10px}.share-draft-modal .modal-content{max-width:500px}.share-draft-modal .share-link-container{background-color:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:10px;word-break:break-all;font-size:14px;color:var(--text-primary);margin-bottom:15px;text-align:left}.share-draft-modal .copy-btn{background-color:var(--accent);color:#fff;border:1px solid var(--accent);padding:10px 15px;border-radius:6px;cursor:pointer;font-size:14px;transition:background .2s ease;width:100%}.share-draft-modal .copy-btn:hover{background-color:var(--accent-hover)}.share-draft-modal .warning-text{font-size:.8em;color:var(--text-secondary);margin-top:10px}@media(max-width:768px){.options-panel{width:100vw;right:-100vw}.editor-content{padding:20px;font-size:14px}.formatting-toolbar{flex-direction:row;flex-wrap:wrap;max-width:90vw}.search-replace-bar{flex-wrap:wrap;justify-content:center}.search-replace-bar button,.search-replace-bar input{width:100%}.add-embed-modal .modal-content input[type=number]{width:calc(100% - 24px);margin-right:0}}</style>
-</head>
-<body>
-<div class=app-container>
-<button class=menu-btn id=menuBtn>
-<i class="fas fa-ellipsis-v"></i>
-</button>
-<div class=menu-dropdown id=menuDropdown>
-<button id=openSettingsBtn><i class="fas fa-cog"></i> Open Settings</button>
-<button id=downloadFileDropdownBtn><i class="fas fa-download"></i> Download File</button>
-<button id=importFileDropdownBtn><i class="fas fa-file-import"></i> Import File</button>
-<button id=shareDraftBtn><i class="fas fa-share-alt"></i> Share Draft</button>
-<button id=addEmbedBtn><i class="fas fa-video"></i> Add Embed</button>
-</div>
-<div class=options-panel id=optionsPanel>
-<div class=options-header>
-<h3>Settings</h3>
-</div>
-<div class=options-content>
-<div class=option-group>
-<label class=option-label>Draft Title (Optional)</label>
-<input class=option-control id=draftTitle placeholder="Leave empty to auto-generate from content">
-</div>
-<div class=option-group>
-<label class=option-label>Text Size</label>
-<div class=zoom-control>
-<span>Small</span>
-<input type=range class=zoom-slider id=zoomSlider min=50 max=200 value=100>
-<span class=zoom-value id=zoomValue>100%</span>
-</div>
-</div>
-<div class=option-group>
-<label class=option-label>Font Preference</label>
-<input type=checkbox id=toggleOpenDyslexic> Use OpenDyslexic Font
-</div>
-<div class=option-group>
-<label class=option-label>Theme
-<input type=checkbox id=toggleLightMode> Light Mode
-</label></div>
-<div class=option-group>
-<button class="btn primary" id=newDraft>New Draft</button>
-</div>
-<div class="option-group drafts-section">
-<label class=option-label>Drafts</label>
-<div class=drafts-list id=draftsList>
-</div>
-</div>
-<div class=option-group>
-<label class=option-label>Import File</label>
-<input type=file id=fileInput accept=.md,.html,.txt>
-<button class=btn id=importFileBtn>Import File</button>
-</div>
-<div class=option-group>
-<label class=option-label>Download Options</label>
-<button class=btn id=downloadMarkdown>Download .md</button>
-<button class=btn id=downloadHTML>Download .html</button>
-<button class=btn id=downloadTXT>Download .txt</button>
-</div>
-</div>
-</div>
-<div class=editor-container>
-<div class=editor-content id=editor contenteditable=true></div>
-<div class=search-replace-bar id=searchReplaceBar>
-<input id=searchTerm placeholder=Find...>
-<input id=replaceTerm placeholder="Replace with...">
-<button id=findNextBtn title="Find Next"><i class="fas fa-arrow-down"></i></button>
-<button id=findPrevBtn title="Find Previous"><i class="fas fa-arrow-up"></i></button>
-<button id=replaceAllBtn title="Replace All"><i class="fas fa-redo"></i> All</button>
-<button class=close-btn id=closeSearchBtn><i class="fas fa-times"></i></button>
-</div>
-</div>
-</div>
-<div id=formattingToolbar class=formatting-toolbar>
-<button data-format=bold><i class="fas fa-bold"></i></button>
-<button data-format=italic><i class="fas fa-italic"></i></button>
-<button data-format=h1>H1</button>
-<button data-format=h2>H2</button>
-<button data-format=h3>H3</button>
-<button data-format=blockquote><i class="fas fa-quote-right"></i></button>
-<button data-format=code><i class="fas fa-code"></i></button>
-<button data-format=link><i class="fas fa-link"></i></button>
-<input type=color id=textColorPicker value=#f0f6fc>
-<button id=removeColorBtn title="Remove Color"><i class="fas fa-paint-brush"></i>&#x20E0;</button>
-</div>
-<div id=confirmationModal class=modal>
-<div class=modal-content>
-<p id=modalMessage>Are you sure?</p>
-<div class=modal-buttons>
-<button class=confirm-btn id=modalConfirmBtn>Confirm</button>
-<button class=cancel-btn id=modalCancelBtn>Cancel</button>
-</div>
-</div>
-</div>
-<div id=fullscreenModal class=fullscreen-modal>
-<span class=close-fullscreen contenteditable=false>&times;</span>
-<iframe id=fullscreenIframe src="" frameborder=0 allowfullscreen></iframe>
-</div>
-<div id=addEmbedModal class="modal add-embed-modal">
-<div class=modal-content>
-<h3 id=embedModalTitle>Add Embedded Content</h3>
-<label for=embedUrl>URL:</label>
-<input id=embedUrl placeholder="e.g., https://www.youtube.com/embed/dQw4w9WgXcQ">
-<label for=embedWidth>Width (px):</label>
-<input type=number id=embedWidth value=560 min=100>
-<label for=embedHeight>Height (px):</label>
-<input type=number id=embedHeight value=315 min=100>
-<label for=embedInsertionPoint>Insert At:</label>
-<select id=embedInsertionPoint>
-<option value=at-cursor>Current Cursor Position</option>
-<option value=beginning>Beginning of Document</option>
-<option value=end>End of Document</option>
-</select>
-<label>Preview:</label>
-<div class=preview-area id=embedPreviewArea>
-<p>Enter a URL to see a preview</p>
-</div>
-<div class=modal-buttons>
-<button class=confirm-btn id=confirmEmbedBtn>Add Embed</button>
-<button class=cancel-btn id=cancelEmbedBtn>Cancel</button>
-</div>
-</div>
-</div>
-<div id=shareDraftModal class="modal share-draft-modal">
-<div class=modal-content>
-<h3>Share Your Draft</h3>
-<p>Copy this link to share your current draft:</p>
-<div class=share-link-container id=shareLinkContainer></div>
-<button class=copy-btn id=copyShareLinkBtn><i class="fas fa-copy"></i> Copy Link</button>
-<p class=warning-text>Note: Very long drafts might exceed URL character limits.</p>
-<div class=modal-buttons>
-<button class=cancel-btn id=closeShareModalBtn>Close</button>
-</div>
-</div>
-</div>
-<script>class LiveMarkdownEditor{constructor(){this.drafts=[],this.currentDraftId=null,this.autoSaveTimer=null,this.localStorageKey="markdownEditorDrafts",this.searchResults=[],this.currentSearchIndex=-1,this.savedRange=null,this.editingEmbedId=null,this.initElements(),this.bindEvents(),this.loadSettingsFromLocalStorage(),this.applySettings(),this.loadDraftsFromLocalStorage(),this.checkUrlForSharedContent(),0===this.drafts.length?this.createNewDraft():this.currentDraftId||this.loadDraft(this.drafts[0].id)}initElements(){this.editor=document.getElementById("editor"),this.optionsPanel=document.getElementById("optionsPanel"),this.draftsList=document.getElementById("draftsList"),this.draftTitle=document.getElementById("draftTitle"),this.zoomSlider=document.getElementById("zoomSlider"),this.zoomValue=document.getElementById("zoomValue"),this.menuBtn=document.getElementById("menuBtn"),this.menuDropdown=document.getElementById("menuDropdown"),this.openSettingsBtn=document.getElementById("openSettingsBtn"),this.downloadFileDropdownBtn=document.getElementById("downloadFileDropdownBtn"),this.importFileDropdownBtn=document.getElementById("importFileDropdownBtn"),this.shareDraftBtn=document.getElementById("shareDraftBtn"),this.addEmbedBtn=document.getElementById("addEmbedBtn"),this.formattingToolbar=document.getElementById("formattingToolbar"),this.formatButtons=this.formattingToolbar.querySelectorAll("button[data-format]"),this.textColorPicker=document.getElementById("textColorPicker"),this.removeColorBtn=document.getElementById("removeColorBtn"),this.confirmationModal=document.getElementById("confirmationModal"),this.modalMessage=document.getElementById("modalMessage"),this.modalConfirmBtn=document.getElementById("modalConfirmBtn"),this.modalCancelBtn=document.getElementById("modalCancelBtn"),this.toggleOpenDyslexic=document.getElementById("toggleOpenDyslexic"),this.toggleLightMode=document.getElementById("toggleLightMode"),this.downloadMarkdownBtn=document.getElementById("downloadMarkdown"),this.downloadHTMLBtn=document.getElementById("downloadHTML"),this.downloadTXTBtn=document.getElementById("downloadTXT"),this.searchReplaceBar=document.getElementById("searchReplaceBar"),this.searchTermInput=document.getElementById("searchTerm"),this.replaceTermInput=document.getElementById("replaceTerm"),this.findNextBtn=document.getElementById("findNextBtn"),this.findPrevBtn=document.getElementById("findPrevBtn"),this.replaceAllBtn=document.getElementById("replaceAllBtn"),this.closeSearchBtn=document.getElementById("closeSearchBtn"),this.fileInput=document.getElementById("fileInput"),this.importFileBtn=document.getElementById("importFileBtn"),this.fullscreenModal=document.getElementById("fullscreenModal"),this.fullscreenIframe=document.getElementById("fullscreenIframe"),this.closeFullscreenBtn=document.querySelector(".close-fullscreen"),this.addEmbedModal=document.getElementById("addEmbedModal"),this.embedModalTitle=document.getElementById("embedModalTitle"),this.embedUrlInput=document.getElementById("embedUrl"),this.embedWidthInput=document.getElementById("embedWidth"),this.embedHeightInput=document.getElementById("embedHeight"),this.embedInsertionPointSelect=document.getElementById("embedInsertionPoint"),this.embedPreviewArea=document.getElementById("embedPreviewArea"),this.confirmEmbedBtn=document.getElementById("confirmEmbedBtn"),this.cancelEmbedBtn=document.getElementById("cancelEmbedBtn"),this.shareDraftModal=document.getElementById("shareDraftModal"),this.shareLinkContainer=document.getElementById("shareLinkContainer"),this.copyShareLinkBtn=document.getElementById("copyShareLinkBtn"),this.closeShareModalBtn=document.getElementById("closeShareModalBtn")}bindEvents(){this.menuBtn.addEventListener("click",(e=>{if(e.stopPropagation(),this.optionsPanel.classList.contains("open"))this.optionsPanel.classList.remove("open"),this.menuBtn.innerHTML='<i class="fas fa-ellipsis-v"></i>';else{this.menuDropdown.classList.toggle("open")&&(this.optionsPanel.classList.remove("open"),this.menuBtn.innerHTML='<i class="fas fa-ellipsis-v"></i>')}})),document.addEventListener("click",(e=>{this.menuDropdown.contains(e.target)||this.menuBtn.contains(e.target)||this.menuDropdown.classList.remove("open"),this.optionsPanel.contains(e.target)||this.menuBtn.contains(e.target)||this.openSettingsBtn.contains(e.target)||(this.optionsPanel.classList.remove("open"),this.menuBtn.innerHTML='<i class="fas fa-ellipsis-v"></i>')})),this.openSettingsBtn.addEventListener("click",(()=>{this.optionsPanel.classList.add("open"),this.menuDropdown.classList.remove("open"),this.menuBtn.innerHTML='<i class="fas fa-times"></i>'})),this.downloadFileDropdownBtn.addEventListener("click",(()=>{this.optionsPanel.classList.add("open"),this.menuDropdown.classList.remove("open"),this.menuBtn.innerHTML='<i class="fas fa-times"></i>'})),this.importFileDropdownBtn.addEventListener("click",(()=>{this.fileInput.click(),this.menuDropdown.classList.remove("open")})),this.shareDraftBtn.addEventListener("click",(()=>{this.showShareDraftModal(),this.menuDropdown.classList.remove("open")})),this.addEmbedBtn.addEventListener("click",(()=>{this.showAddEmbedModal(),this.menuDropdown.classList.remove("open")})),this.zoomSlider.addEventListener("input",(e=>{const t=e.target.value;this.editor.style.fontSize=t/100*16+"px",this.zoomValue.textContent=`${t}%`})),document.getElementById("newDraft").addEventListener("click",(()=>{this.createNewDraft()})),this.editor.addEventListener("input",(()=>{this.scheduleAutoSave(),this.clearSearchResults()})),this.editor.addEventListener("mouseup",this.handleSelectionChange.bind(this)),this.editor.addEventListener("keyup",this.handleSelectionChange.bind(this)),document.addEventListener("mousedown",(e=>{this.formattingToolbar.contains(e.target)||this.editor.contains(e.target)||this.searchReplaceBar.contains(e.target)||this.hideToolbar()})),this.draftTitle.addEventListener("input",(()=>{this.scheduleAutoSave()})),this.formatButtons.forEach((e=>{e.addEventListener("click",(e=>{e.preventDefault();const t=e.currentTarget.dataset.format;this.applyFormat(t),this.hideToolbar()}))})),this.editor.addEventListener("keydown",(e=>{"Tab"===e.key?(e.preventDefault(),document.execCommand("insertText",!1,"    ")):(e.ctrlKey||e.metaKey)&&("b"===e.key||"i"===e.key||"u"===e.key||"`"===e.key?e.preventDefault():"f"===e.key&&(e.preventDefault(),this.toggleSearchReplaceBar(!0)))})),this.textColorPicker.addEventListener("input",(e=>{const t=e.target.value;this.applyColor(t),this.scheduleAutoSave(),this.hideToolbar()})),this.removeColorBtn.addEventListener("click",(e=>{e.preventDefault(),this.removeColor(),this.scheduleAutoSave(),this.hideToolbar()})),this.toggleOpenDyslexic.addEventListener("change",(e=>{this.settings.useOpenDyslexic=e.target.checked,this.applySettings(),this.saveSettingsToLocalStorage()})),this.toggleLightMode.addEventListener("change",(e=>{this.settings.lightMode=e.target.checked,this.applySettings(),this.saveSettingsToLocalStorage()})),this.downloadMarkdownBtn.addEventListener("click",(()=>this.downloadContent("md"))),this.downloadHTMLBtn.addEventListener("click",(()=>this.downloadContent("html"))),this.downloadTXTBtn.addEventListener("click",(()=>this.downloadContent("txt"))),this.searchTermInput.addEventListener("input",this.findText.bind(this)),this.findNextBtn.addEventListener("click",(()=>this.navigateToSearchResult(1))),this.findPrevBtn.addEventListener("click",(()=>this.navigateToSearchResult(-1))),this.replaceAllBtn.addEventListener("click",this.replaceAll.bind(this)),this.closeSearchBtn.addEventListener("click",this.toggleSearchReplaceBar.bind(this,!1)),this.editor.addEventListener("keydown",(e=>{"Escape"===e.key&&this.searchReplaceBar.classList.contains("open")&&this.toggleSearchReplaceBar(!1)})),this.importFileBtn.addEventListener("click",(()=>this.fileInput.click())),this.fileInput.addEventListener("change",this.importFile.bind(this)),this.closeFullscreenBtn.addEventListener("click",(()=>{this.fullscreenModal.classList.remove("active"),this.fullscreenIframe.src=""})),this.embedUrlInput.addEventListener("input",this.updateEmbedPreview.bind(this)),this.embedWidthInput.addEventListener("input",this.updateEmbedPreview.bind(this)),this.embedHeightInput.addEventListener("input",this.updateEmbedPreview.bind(this)),this.confirmEmbedBtn.addEventListener("click",(()=>{const e=this.embedUrlInput.value,t=this.embedWidthInput.value,n=this.embedHeightInput.value,s=this.embedInsertionPointSelect.value;e?(this.editingEmbedId?this.updateEmbed(this.editingEmbedId,e,t,n):this.insertEmbed(e,t,n,s),this.addEmbedModal.style.display="none",this.scheduleAutoSave()):this.showConfirmationModal("Please enter a URL for the embed.")})),this.cancelEmbedBtn.addEventListener("click",(()=>{this.addEmbedModal.style.display="none",this.editingEmbedId=null})),this.copyShareLinkBtn.addEventListener("click",(()=>{const e=this.shareLinkContainer.textContent;if(e){document.execCommand("copy");const t=document.createElement("textarea");t.value=e,document.body.appendChild(t),t.select(),document.execCommand("copy"),t.remove(),this.showConfirmationModal("Link copied to clipboard!")}})),this.closeShareModalBtn.addEventListener("click",(()=>{this.shareDraftModal.style.display="none"}))}handleSelectionChange(){const e=window.getSelection();if(!e.isCollapsed&&this.editor.contains(e.focusNode)&&this.editor.contains(e.anchorNode)){const t=e.getRangeAt(0).getBoundingClientRect();let n=t.top+window.scrollY-this.formattingToolbar.offsetHeight-10,s=t.left+window.scrollX+t.width/2-this.formattingToolbar.offsetWidth/2;n<window.scrollY+10&&(n=t.bottom+window.scrollY+10),s<window.scrollX+10&&(s=window.scrollX+10),s+this.formattingToolbar.offsetWidth>window.innerWidth-10&&(s=window.innerWidth-this.formattingToolbar.offsetWidth-10),this.formattingToolbar.style.display="flex",this.formattingToolbar.style.left=`${s}px`,this.formattingToolbar.style.top=`${n}px`}else this.hideToolbar()}hideToolbar(){this.formattingToolbar.style.display="none"}applyFormat(e){this.editor.focus(),this.clearSearchResults();const t=window.getSelection();if(!t.rangeCount)return;const n=t.getRangeAt(0);let s=n.commonAncestorContainer;switch(s.nodeType===Node.TEXT_NODE&&(s=s.parentElement),e){case"bold":document.execCommand("bold",!1,null);break;case"italic":document.execCommand("italic",!1,null);break;case"h1":document.execCommand("formatBlock",!1,"<h1>");break;case"h2":document.execCommand("formatBlock",!1,"<h2>");break;case"h3":document.execCommand("formatBlock",!1,"<h3>");break;case"blockquote":(s?s.closest("blockquote"):null)?document.execCommand("formatBlock",!1,"<div>"):document.execCommand("formatBlock",!1,"<blockquote>");break;case"code":const i=s?s.closest("code"):null,o=s?s.closest("pre"):null;if(i&&o){const e=document.createDocumentFragment();for(;i.firstChild;)e.appendChild(i.firstChild);o.parentNode.insertBefore(e,o),o.parentNode.removeChild(o)}else{const e=n.extractContents(),s=document.createElement("pre"),i=document.createElement("code");i.appendChild(e),s.appendChild(i),n.insertNode(s),n.selectNodeContents(i),t.removeAllRanges(),t.addRange(n)}break;case"link":const a=prompt("Enter the URL:","https://");a&&document.execCommand("createLink",!1,a);break;default:console.warn("Unknown format command:",e)}this.scheduleAutoSave()}applyColor(e){this.editor.focus();const t=window.getSelection();if(!t.rangeCount)return;const n=t.getRangeAt(0);if(t.isCollapsed){const s=n.commonAncestorContainer.closest('span[style*="color"], font[color]');if(s)"span"===s.tagName.toLowerCase()?s.style.color=e:"font"===s.tagName.toLowerCase()&&(s.color=e);else{const s=document.createElement("span");s.style.color=e,n.insertNode(s),n.setStart(s,0),n.collapse(!0),t.removeAllRanges(),t.addRange(n)}}else{const s=n.extractContents(),i=document.createElement("div");i.appendChild(s),i.querySelectorAll('span[style*="color"], font[color]').forEach((e=>{for(;e.firstChild;)e.parentNode.insertBefore(e.firstChild,e);e.parentNode.removeChild(e)}));const o=document.createElement("span");for(o.style.color=e;i.firstChild;)o.appendChild(i.firstChild);n.insertNode(o),t.removeAllRanges(),t.addRange(n)}this.scheduleAutoSave()}removeColor(){this.editor.focus();const e=window.getSelection();if(!e.rangeCount)return;const t=e.getRangeAt(0),n=t.extractContents(),s=document.createElement("div");s.appendChild(n),s.querySelectorAll('span[style*="color"], font[color]').forEach((e=>{for(;e.firstChild;)e.parentNode.insertBefore(e.firstChild,e);e.parentNode.removeChild(e)})),t.insertNode(s),e.removeAllRanges(),e.addRange(t),this.scheduleAutoSave()}placeCursorAtEnd(){const e=window.getSelection(),t=document.createRange();this.editor.lastChild?this.editor.lastChild.nodeType===Node.TEXT_NODE?t.setStart(this.editor.lastChild,this.editor.lastChild.textContent.length):t.setStartAfter(this.editor.lastChild):t.setStart(this.editor,0),t.collapse(!0),e.removeAllRanges(),e.addRange(t)}scheduleAutoSave(){clearTimeout(this.autoSaveTimer),this.autoSaveTimer=setTimeout((()=>{this.saveDraft(),this.saveDraftsToLocalStorage()}),1e3)}createNewDraft(e="",t=""){this.saveDraft();const n={id:Date.now(),title:t,content:e,createdAt:(new Date).toISOString(),updatedAt:(new Date).toISOString()};this.drafts.unshift(n),this.loadDraft(n.id),this.renderDrafts(),this.saveDraftsToLocalStorage()}loadDraft(e){const t=this.drafts.find((t=>t.id===e));if(t){this.currentDraftId=e,this.draftTitle.value=t.title;const n=this.convertCustomSyntaxToHtml(t.content);this.editor.innerHTML=n,this.renderDrafts(),this.placeCursorAtEnd(),this.clearSearchResults()}}saveDraft(){if(!this.currentDraftId)return;const e=this.drafts.find((e=>e.id===this.currentDraftId));if(e){const t=this.editor.innerHTML,n=this.convertHtmlToCustomSyntax(t),s=this.editor.textContent||"";e.title=this.draftTitle.value||this.generateTitleFromContent(s),e.content=n,e.updatedAt=(new Date).toISOString(),this.renderDrafts()}}convertNodeToCustomSyntax(e){if(e.nodeType===Node.TEXT_NODE)return e.nodeValue;if(e.nodeType===Node.ELEMENT_NODE){let t=Array.from(e.childNodes).map((e=>this.convertNodeToCustomSyntax(e))).join("");const n=e.tagName.toLowerCase();let s=!1,i="";if("span"===n&&e.style.color?(s=!0,i=e.style.color):"font"===n&&e.color&&(s=!0,i=e.color),s){let e="";const n=i.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);if(n){const t=e=>parseInt(e).toString(16).padStart(2,"0");e=`${t(n[1])}${t(n[2])}${t(n[3])}`}else if(i.startsWith("#"))e=i.substring(1);else{if(!i)return console.warn(`Could not convert color '${i}' to hex for custom syntax. Returning inner content.`),t;{const n=document.createElement("div");n.style.color=i,document.body.appendChild(n);const s=window.getComputedStyle(n).color;document.body.removeChild(n);const o=s.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);if(!o)return console.warn(`Could not convert named color '${i}' to hex for custom syntax. Returning inner content.`),t;{const t=e=>parseInt(e).toString(16).padStart(2,"0");e=`${t(o[1])}${t(o[2])}${t(o[3])}`}}}return`<#${e}>${t}</>`}if(e.classList.contains("embed-container")&&e.dataset.href){return`<embed href="${e.dataset.href}" width="${e.dataset.width||""}" height="${e.dataset.height||""}" data-id="${e.dataset.id||""}"/>`}const o=e.tagName.toLowerCase(),a=Array.from(e.attributes).map((e=>`${e.name}="${e.value}"`)).join(" ");return"br"===o?"<br>":`<${o}${a?" "+a:""}>${t}</${o}>`}return""}convertHtmlToCustomSyntax(e){const t=(new DOMParser).parseFromString(e,"text/html");let n="";return Array.from(t.body.childNodes).forEach((e=>{n+=this.convertNodeToCustomSyntax(e)})),n}convertCustomSyntaxToHtml(e){let t=e;return t=t.replace(/<#([0-9a-fA-F]{3,6})>(.*?)<\/>/gs,((e,t,n)=>`<span style="color: #${t}">${n}</span>`)),t=t.replace(/<embed href="(.*?)"(?: width="(.*?)")?(?: height="(.*?)")?(?: data-id="(.*?)")?\/>/gs,((e,t,n="",s="",i=Date.now())=>`\n                    <div class="embed-container" data-href="${t}" data-width="${n}" data-height="${s}" data-id="${i}" ${n||s?`style="${n?`width:${n}px;`:""}${s?`height:${s}px;`:""}"`:""} contenteditable="false">\n                        <div class="embed-overlay">\n                            <i class="fas fa-play-circle play-button"></i>\n                            <span>Click to view embedded content</span>\n                        </div>\n                        <div class="embed-controls">\n                            <button class="edit-embed-btn" data-id="${i}" contenteditable="false"><i class="fas fa-edit"></i> Edit</button>\n                            <button class="delete-embed-btn" data-id="${i}" contenteditable="false"><i class="fas fa-trash"></i> Delete</button>\n                        </div>\n                    </div>\n                `)),this.applyMarkdownFormatting(t)}applyMarkdownFormatting(e){let t=e;return t=t.replace(/^###### (.*$)/gim,"<h6>$1</h6>"),t=t.replace(/^##### (.*$)/gim,"<h5>$1</h5>"),t=t.replace(/^#### (.*$)/gim,"<h4>$1</h4>"),t=t.replace(/^### (.*$)/gim,"<h3>$1</h3>"),t=t.replace(/^## (.*$)/gim,"<h2>$1</h2>"),t=t.replace(/^# (.*$)/gim,"<h1>$1</h1>"),t=t.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>"),t=t.replace(/__(.*?)__/g,"<strong>$1</strong>"),t=t.replace(/\*(.*?)\*/g,"<em>$1</em>"),t=t.replace(/_(.*?)_/g,"<em>$1</em>"),t=t.replace(/```([\s\S]*?)```/g,"<pre><code>$1</code></pre>"),t=t.replace(/`([^`]+)`/g,"<code>$1</code>"),t=t.replace(/^> (.*$)/gim,"<blockquote>$1</blockquote>"),t=t.replace(/\[(.*?)\]\((.*?)\)/g,'<a href="$2">$1</a>'),t=t.replace(/<ul>([\s\S]*?)<\/ul>/gs,((e,t)=>t.replace(/<li>([\s\S]*?)<\/li>/g,((e,t)=>{const n=t.trim().split("\n");return`- ${n[0]}\n`+n.slice(1).map((e=>`  ${e}`)).join("\n")+"\n"})))),t=t.replace(/<ol>([\s\S]*?)<\/ol>/gs,((e,t)=>{let n=1;return t.replace(/<li>([\s\S]*?)<\/li>/g,((e,t)=>{const s=t.trim().split("\n");return`${n++}. ${s[0]}\n`+s.slice(1).map((e=>`   ${e}`)).join("\n")+"\n"}))})),t=t.replace(/<br\s*\/?>/g,"\n"),t=t.replace(/\n{3,}/g,"\n\n").trim(),t}renderContent(){this.addEmbedListeners()}addEmbedListeners(){document.querySelectorAll(".embed-container").forEach((e=>{if(!e.dataset.listenerAdded){const t=e.querySelector(".embed-overlay");t&&t.addEventListener("click",(t=>this.handleEmbedClick(t,e)));const n=e.querySelector(".edit-embed-btn");n&&n.addEventListener("click",(e=>{e.stopPropagation(),this.editEmbed(parseInt(n.dataset.id))}));const s=e.querySelector(".delete-embed-btn");s&&s.addEventListener("click",(e=>{e.stopPropagation(),this.deleteEmbed(parseInt(s.dataset.id))})),e.dataset.listenerAdded="true"}}))}handleEmbedClick(e,t){const n=t.dataset.href;if(n){const e=t.querySelector(".embed-overlay");e&&e.remove();const s=document.createElement("iframe");s.src=n,s.setAttribute("frameborder","0"),s.setAttribute("allowfullscreen",""),s.dataset.href=n,t.appendChild(s)}}openFullscreenEmbed(e){this.fullscreenIframe.src=e,this.fullscreenModal.classList.add("active")}generateTitleFromContent(e){if(!e.trim())return"Untitled Draft";const t=e.split("\n")[0]||"";return t.substring(0,20)+(t.length>20?"...":"")||"Untitled Draft"}showConfirmationModal(e){return new Promise((t=>{this.modalMessage.textContent=e,this.confirmationModal.style.display="flex";const n=()=>{this.confirmationModal.style.display="none",this.modalConfirmBtn.removeEventListener("click",n),this.modalCancelBtn.removeEventListener("click",s),t(!0)},s=()=>{this.confirmationModal.style.display="none",this.modalConfirmBtn.removeEventListener("click",n),this.modalCancelBtn.removeEventListener("click",s),t(!1)};this.modalConfirmBtn.addEventListener("click",n),this.modalCancelBtn.addEventListener("click",s)}))}async deleteDraft(e){await this.showConfirmationModal("Are you sure you want to delete this draft?")&&(this.drafts=this.drafts.filter((t=>t.id!==e)),this.currentDraftId===e&&(this.drafts.length>0?this.loadDraft(this.drafts[0].id):this.createNewDraft()),this.renderDrafts(),this.saveDraftsToLocalStorage())}renderDrafts(){this.draftsList.innerHTML="",0!==this.drafts.length?(this.drafts.forEach((e=>{const t=document.createElement("div");t.className="draft-item "+(e.id===this.currentDraftId?"active":""),t.draggable=!0,t.dataset.id=e.id;const n=document.createElement("div");n.innerHTML=this.convertCustomSyntaxToHtml(e.content);const s=n.textContent||n.innerText||"",i=e.title||this.generateTitleFromContent(s),o=s.substring(0,50)+(s.length>50?"...":"");t.innerHTML=`\n                    <div class="draft-info">\n                        <div class="draft-title">${i}</div>\n                        <div class="draft-preview">${o||"Empty draft"}</div>\n                    </div>\n                    <div class="draft-actions">\n                        <button class="draft-btn" data-action="delete" data-id="${e.id}">Delete</button>\n                    </div>\n                `,t.querySelector(".draft-info").addEventListener("click",(t=>{t.stopPropagation(),this.loadDraft(e.id)})),t.querySelector('[data-action="delete"]').addEventListener("click",(e=>{e.stopPropagation(),this.deleteDraft(parseInt(e.target.dataset.id))})),t.addEventListener("dragstart",(n=>{n.dataTransfer.setData("text/plain",e.id),t.classList.add("dragging")})),t.addEventListener("dragend",(()=>{t.classList.remove("dragging")})),this.draftsList.appendChild(t)})),this.draftsList.addEventListener("dragover",(e=>{e.preventDefault();const t=document.querySelector(".draft-item.dragging");if(t){const n=this.getDragAfterElement(this.draftsList,e.clientY);null==n?this.draftsList.appendChild(t):this.draftsList.insertBefore(t,n)}})),this.draftsList.addEventListener("drop",(e=>{e.preventDefault();const t=parseInt(e.dataTransfer.getData("text/plain"));if(this.drafts.find((e=>e.id===t))){const e=Array.from(this.draftsList.children).map((e=>parseInt(e.dataset.id))),t=[];for(const n of e){const e=this.drafts.find((e=>e.id===n));e&&t.push(e)}this.drafts=t,this.saveDraftsToLocalStorage()}})),this.addEmbedListeners()):this.draftsList.innerHTML='<div style="color: var(--text-secondary); text-align: center; padding: 2rem;">No drafts</div>'}getDragAfterElement(e,t){return[...e.querySelectorAll(".draft-item:not(.dragging)")].reduce(((e,n)=>{const s=n.getBoundingClientRect(),i=t-s.top-s.height/2;return i<0&&i>e.offset?{offset:i,element:n}:e}),{offset:Number.NEGATIVE_INFINITY}).element}saveDraftsToLocalStorage(){try{const e=this.drafts.map((e=>({...e,createdAt:e.createdAt instanceof Date?e.createdAt.toISOString():e.createdAt,updatedAt:e.updatedAt instanceof Date?e.updatedAt.toISOString():e.updatedAt})));localStorage.setItem(this.localStorageKey,JSON.stringify(e)),console.log("Drafts saved to localStorage ✅")}catch(e){console.error("Failed to save drafts to localStorage:",e)}}loadDraftsFromLocalStorage(){try{const e=localStorage.getItem(this.localStorageKey);e&&(this.drafts=JSON.parse(e).map((e=>({...e,createdAt:new Date(e.createdAt),updatedAt:new Date(e.updatedAt)}))),this.drafts.forEach((e=>{e.content=this.convertCustomSyntaxToHtml(e.content)})),console.log("Drafts loaded from localStorage ✨"))}catch(e){console.error("Failed to load drafts from localStorage:",e)}}settings={useOpenDyslexic:!0,lightMode:!1};saveSettingsToLocalStorage(){try{localStorage.setItem("markdownEditorSettings",JSON.stringify(this.settings)),console.log("Settings saved to localStorage ⚙️")}catch(e){console.error("Couldn't save settings to localStorage:",e)}}loadSettingsFromLocalStorage(){try{const e=localStorage.getItem("markdownEditorSettings");e&&(this.settings={...this.settings,...JSON.parse(e)},console.log("Settings loaded from localStorage 🚀"))}catch(e){console.error("Failed to load settings from localStorage:",e)}}applySettings(){this.settings.useOpenDyslexic?(document.body.classList.add("use-opendyslexic"),this.editor.style.fontFamily="'OpenDyslexic', Arial, sans-serif"):(document.body.classList.remove("use-opendyslexic"),this.editor.style.fontFamily="Arial, sans-serif"),this.toggleOpenDyslexic.checked=this.settings.useOpenDyslexic,this.settings.lightMode?document.body.classList.add("light-mode"):document.body.classList.remove("light-mode"),this.toggleLightMode.checked=this.settings.lightMode}downloadContent(e){const t=this.drafts.find((e=>e.id===this.currentDraftId));if(!t)return void this.showConfirmationModal("No draft selected to download.");let n=(t.title||"untitled").replace(/[^a-z0-9]/gi,"_").toLowerCase(),s="",i="";const o=document.createElement("div");switch(o.innerHTML=this.editor.innerHTML,e){case"md":o.querySelectorAll('span[style*="color"], font[color]').forEach((e=>{e.outerHTML=e.textContent})),o.querySelectorAll(".embed-container").forEach((e=>{e.outerHTML=""})),s=this.convertHtmlToMarkdown(o.innerHTML),i="text/markdown",n+=".md";break;case"html":s=this.editor.innerHTML,i="text/html",n+=".html";break;case"txt":s=o.textContent||o.innerText||"",s=s.replace(/<#([0-9a-fA-F]{3,6})>(.*?)<\/>/gs,"$2"),s=s.replace(/<embed href="(.*?)"(?: width="(.*?)")?(?: height="(.*?)")?(?: data-id="(.*?)")?\/>/gs,""),i="text/plain",n+=".txt";break;default:return void console.warn("Unsupported download format:",e)}const a=new Blob([s],{type:i}),r=URL.createObjectURL(a),d=document.createElement("a");d.href=r,d.download=n,document.body.appendChild(d),d.click(),document.body.removeChild(d),URL.revokeObjectURL(r)}convertHtmlToMarkdown(e){let t=document.createElement("div");t.innerHTML=e,t.querySelectorAll('span[style*="color"], font[color]').forEach((e=>{e.outerHTML=e.textContent})),t.querySelectorAll(".embed-container").forEach((e=>{e.outerHTML=""}));let n=t.innerHTML;return n=n.replace(/<h1>(.*?)<\/h1>/g,"# $1\n"),n=n.replace(/<h2>(.*?)<\/h2>/g,"## $1\n"),n=n.replace(/<h3>(.*?)<\/h3>/g,"### $1\n"),n=n.replace(/<h4>(.*?)<\/h4>/g,"#### $1\n"),n=n.replace(/<h5>(.*?)<\/h5>/g,"##### $1\n"),n=n.replace(/<h6>(.*?)<\/h6>/g,"###### $1\n"),n=n.replace(/<strong>(.*?)<\/strong>/g,"**$1**"),n=n.replace(/<b>(.*?)<\/b>/g,"**$1**"),n=n.replace(/<em>(.*?)<\/em>/g,"*$1*"),n=n.replace(/<i>(.*?)<\/i>/g,"*$1*"),n=n.replace(/<blockquote>([\s\S]*?)<\/blockquote>/g,((e,t)=>t.split("\n").map((e=>`> ${e.trim()}`)).join("\n").trim()+"\n\n")),n=n.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g,"```\n$1\n```\n"),n=n.replace(/<code>(.*?)<\/code>/g,"`$1`"),n=n.replace(/<a href="(.*?)">(.*?)<\/a>/g,"[$2]($1)"),n=n.replace(/<ul>([\s\S]*?)<\/ul>/gs,((e,t)=>t.replace(/<li>([\s\S]*?)<\/li>/g,((e,t)=>{const n=t.trim().split("\n");return`- ${n[0]}\n`+n.slice(1).map((e=>`  ${e}`)).join("\n")+"\n"})))),n=n.replace(/<ol>([\s\S]*?)<\/ol>/gs,((e,t)=>{let n=1;return t.replace(/<li>([\s\S]*?)<\/li>/g,((e,t)=>{const s=t.trim().split("\n");return`${n++}. ${s[0]}\n`+s.slice(1).map((e=>`   ${e}`)).join("\n")+"\n"}))})),n=n.replace(/<br\s*\/?>/g,"\n"),n=n.replace(/\n{3,}/g,"\n\n").trim(),n}toggleSearchReplaceBar(e){"boolean"==typeof e?e?(this.searchReplaceBar.classList.add("open"),this.searchTermInput.focus(),this.findText()):(this.searchReplaceBar.classList.remove("open"),this.clearSearchResults()):(this.searchReplaceBar.classList.toggle("open"),this.searchReplaceBar.classList.contains("open")?(this.searchTermInput.focus(),this.findText()):this.clearSearchResults())}findText(){this.clearSearchResults();const e=this.searchTermInput.value.trim();if(""===e)return;const t=this.editor.innerHTML,n=document.createElement("div");n.innerHTML=t,n.querySelectorAll("iframe, .embed-overlay").forEach((e=>e.remove()));const s=n.textContent;let i=[],o=0;const a=document.createTreeWalker(n,NodeFilter.SHOW_TEXT,null,!1);let r;for(;r=a.nextNode();)i.push({node:r,start:o,end:o+r.nodeValue.length}),o+=r.nodeValue.length;const d=new RegExp(e.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi");let l;for(this.searchResults=[];null!==(l=d.exec(s));)this.searchResults.push({start:l.index,end:l.index+l[0].length});this.searchResults.length>0?(this.highlightSearchResults(),this.currentSearchIndex=0,this.scrollToSearchResult(this.currentSearchIndex)):this.currentSearchIndex=-1}highlightSearchResults(){this.clearHighlights();const e=this.editor.innerHTML,t=document.createElement("div");t.innerHTML=e,this.searchResults.forEach(((e,n)=>{const s=document.createRange();let i=0,o=null,a=null,r=0,d=0;const l=document.createTreeWalker(t,NodeFilter.SHOW_TEXT);let c;for(;c=l.nextNode();){const t=c.nodeValue.length;if(null===o&&e.start>=i&&e.start<i+t&&(o=c,r=e.start-i),null===a&&e.end>i&&e.end<=i+t&&(a=c,d=e.end-i),o&&a)break;i+=t}if(o&&a)try{s.setStart(o,r),s.setEnd(a,d);const e=document.createElement("span");e.className="highlight",e.dataset.searchIndex=n,s.surroundContents(e)}catch(t){console.warn("Could not highlight range:",t,e,o,a)}})),this.editor.innerHTML=t.innerHTML,this.editor.normalize()}clearHighlights(){this.editor.querySelectorAll(".highlight").forEach((e=>{const t=e.parentNode;for(;e.firstChild;)t.insertBefore(e.firstChild,e);t.removeChild(e),t.normalize()}))}clearSearchResults(){this.clearHighlights(),this.searchResults=[],this.currentSearchIndex=-1}navigateToSearchResult(e){0!==this.searchResults.length&&(this.currentSearchIndex+=e,this.currentSearchIndex>=this.searchResults.length?this.currentSearchIndex=0:this.currentSearchIndex<0&&(this.currentSearchIndex=this.searchResults.length-1),this.scrollToSearchResult(this.currentSearchIndex),this.updateActiveHighlight(this.currentSearchIndex))}scrollToSearchResult(e){const t=this.editor.querySelector(`.highlight[data-search-index="${e}"]`);t&&t.scrollIntoView({behavior:"smooth",block:"center"})}updateActiveHighlight(e){this.editor.querySelectorAll(".highlight").forEach(((t,n)=>{t.style.backgroundColor=n===e?"rgba(255, 165, 0, 0.7)":"rgba(255, 255, 0, 0.5)"}))}replaceAll(){const e=this.searchTermInput.value,t=this.replaceTermInput.value;if(!e)return void this.showConfirmationModal("Please enter a term to find.");let n=this.editor.innerHTML;const s=new RegExp(e.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi"),i=document.createElement("div");i.innerHTML=n;const o=e=>{if(e.nodeType===Node.TEXT_NODE)e.nodeValue=e.nodeValue.replace(s,t);else if(e.nodeType===Node.ELEMENT_NODE){if("script"===e.tagName.toLowerCase()||"style"===e.tagName.toLowerCase())return;for(let t=0;t<e.childNodes.length;t++)o(e.childNodes[t])}};o(i),this.editor.innerHTML=i.innerHTML,this.scheduleAutoSave(),this.findText(),this.showConfirmationModal(`All occurrences of "${e}" replaced with "${t}".`)}async importFile(e){const t=e.target.files[0];if(!t)return;const n=new FileReader;n.onload=async n=>{const s=n.target.result,i=t.name.split(".").pop().toLowerCase();let o=s;if("md"===i||"txt"===i){let e=this.convertCustomSyntaxToHtml(s);o=this.applyMarkdownFormatting(e)}else"html"===i&&(o=this.convertCustomSyntaxToHtml(s));const a=t.name.replace(/\.[^/.]+$/,""),r={id:Date.now(),title:a,content:o,createdAt:(new Date).toISOString(),updatedAt:(new Date).toISOString()};this.drafts.unshift(r),this.loadDraft(r.id),this.renderDrafts(),this.saveDraftsToLocalStorage(),await this.showConfirmationModal(`File "${t.name}" imported successfully!`),e.target.value=""},n.onerror=async()=>{await this.showConfirmationModal("Error reading file.")},n.readAsText(t)}showAddEmbedModal(e=null){if(this.editingEmbedId=e?e.id:null,this.embedModalTitle.textContent=e?"Edit Embedded Content":"Add Embedded Content",this.confirmEmbedBtn.textContent=e?"Update Embed":"Add Embed",this.embedUrlInput.value=e?e.href:"",this.embedWidthInput.value=e?e.width:"560",this.embedHeightInput.value=e?e.height:"315",this.embedInsertionPointSelect.style.display=e?"none":"block",this.embedInsertionPointSelect.previousElementSibling.style.display=e?"none":"block",this.embedInsertionPointSelect.value="at-cursor",this.updateEmbedPreview(),this.addEmbedModal.style.display="flex",!e){const e=window.getSelection();e.rangeCount>0?this.savedRange=e.getRangeAt(0):this.savedRange=null}}updateEmbedPreview(){const e=this.embedUrlInput.value,t=this.embedWidthInput.value,n=this.embedHeightInput.value;this.embedPreviewArea.innerHTML=e?`<iframe src="${e}" width="${t}" height="${n}" frameborder="0" allowfullscreen></iframe>`:"<p>Enter a URL to see a preview</p>"}insertEmbed(e,t,n,s){const i=Date.now(),o=`\n                <div class="embed-container" \n                     data-href="${e}" \n                     data-width="${t}" \n                     data-height="${n}" \n                     data-id="${i}"\n                     style="${t?`width:${t}px;`:""}${n?`height:${n}px;`:""}"\n                     contenteditable="false">\n                    <div class="embed-overlay">\n                        <i class="fas fa-play-circle play-button"></i>\n                        <span>Click to view embedded content</span>\n                    </div>\n                    <div class="embed-controls">\n                        <button class="edit-embed-btn" data-id="${i}" contenteditable="false"><i class="fas fa-edit"></i> Edit</button>\n                        <button class="delete-embed-btn" data-id="${i}" contenteditable="false"><i class="fas fa-trash"></i> Delete</button>\n                    </div>\n                </div>`;this.editor.focus();const a=document.createElement("div");a.innerHTML=o.trim();const r=a.firstChild;"beginning"===s?this.editor.prepend(r):"end"===s?this.editor.append(r):this.savedRange&&!this.savedRange.collapsed?(this.savedRange.deleteContents(),this.savedRange.insertNode(r),this.savedRange.setStartAfter(r),this.savedRange.collapse(!0),window.getSelection().removeAllRanges(),window.getSelection().addRange(this.savedRange)):this.savedRange?(this.savedRange.insertNode(r),this.savedRange.setStartAfter(r),this.savedRange.collapse(!0),window.getSelection().removeAllRanges(),window.getSelection().addRange(this.savedRange)):(this.editor.append(r),this.placeCursorAtEnd()),this.savedRange=null,this.addEmbedListeners(),this.scheduleAutoSave()}updateEmbed(e,t,n,s){const i=this.editor.querySelector(`.embed-container[data-id="${e}"]`);if(i){i.dataset.href=t,i.dataset.width=n,i.dataset.height=s,i.style.width=n?`${n}px`:"",i.style.height=s?`${s}px`:"";const e=i.querySelector("iframe");if(e)e.src=t,e.width=n,e.height=s;else{const e=i.querySelector(".embed-overlay");e&&e.remove();const t=document.createElement("div");t.className="embed-overlay",t.innerHTML='<i class="fas fa-play-circle play-button"></i><span>Click to view embedded content</span>',i.prepend(t),t.addEventListener("click",(e=>this.handleEmbedClick(e,i)))}this.scheduleAutoSave()}}editEmbed(e){const t=this.editor.querySelector(`.embed-container[data-id="${e}"]`);if(t){const n={id:e,href:t.dataset.href,width:t.dataset.width,height:t.dataset.height};this.showAddEmbedModal(n)}}async deleteEmbed(e){if(await this.showConfirmationModal("Are you sure you want to delete this embed?")){const t=this.editor.querySelector(`.embed-container[data-id="${e}"]`);t&&(t.remove(),this.scheduleAutoSave())}}showShareDraftModal(){const e=this.drafts.find((e=>e.id===this.currentDraftId));if(!e)return void this.showConfirmationModal("No draft selected to share.");const t=encodeURIComponent(e.content),n=`${window.location.origin}${window.location.pathname}?content=${t}`;this.shareLinkContainer.textContent=n,this.shareDraftModal.style.display="flex"}checkUrlForSharedContent(){const e=new URLSearchParams(window.location.search).get("content");if(e){const t=decodeURIComponent(e);this.createNewDraft(t,"Shared Draft"),window.history.replaceState({},document.title,window.location.pathname),this.showConfirmationModal("A shared draft has been loaded. It has been added to your drafts.")}}}document.addEventListener("DOMContentLoaded",(()=>{new LiveMarkdownEditor}))</script>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Markdown Editor</title>
+        <link href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css rel=stylesheet>
+        <style>
+            @font-face {
+                font-family: OpenDyslexic;
+                src: url("./opendyslexic-0.91.12/compiled/OpenDyslexic-Regular.otf") format("opentype");
+                font-weight: 400;
+                font-style: normal;
+            }
+            @font-face {
+                font-family: OpenDyslexic;
+                src: url("./opendyslexic-0.91.12/compiled/OpenDyslexic-Bold.otf") format("opentype");
+                font-weight: 700;
+                font-style: normal;
+            }
+            @font-face {
+                font-family: OpenDyslexic;
+                src: url("./opendyslexic-0.91.12/compiled/OpenDyslexic-Italic.otf") format("opentype");
+                font-weight: 400;
+                font-style: italic;
+            }
+            @font-face {
+                font-family: OpenDyslexic;
+                src: url("./opendyslexic-0.91.12/compiled/OpenDyslexic-Bold-Italic.otf") format("opentype");
+                font-weight: 700;
+                font-style: italic;
+            }
+            :root {
+                --bg-primary: #0d1117;
+                --bg-secondary: #161b22;
+                --bg-tertiary: #21262d;
+                --text-primary: #f0f6fc;
+                --text-secondary: #7d8590;
+                --accent: #58a6ff;
+                --accent-hover: #388bfd;
+                --border: #30363d;
+                --success: #238636;
+                --danger: #da3633;
+                --font-family: Arial, sans-serif;
+            }
+            body.light-mode {
+                --bg-primary: #ffffff;
+                --bg-secondary: #f6f8fa;
+                --bg-tertiary: #e1e4e8;
+                --text-primary: #24292e;
+                --text-secondary: #586069;
+                --accent: #0366d6;
+                --accent-hover: #005cc5;
+                --border: #d1d5da;
+                --success: #28a745;
+                --danger: #cb2431;
+            }
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: var(--font-family);
+                background: var(--bg-primary);
+                color: var(--text-primary);
+                height: 100vh;
+                overflow: hidden;
+                transition: background 0.3s ease, color 0.3s ease;
+            }
+            body.use-opendyslexic {
+                font-family: OpenDyslexic, Arial, sans-serif;
+            }
+            .app-container {
+                display: flex;
+                height: 100vh;
+                position: relative;
+            }
+            .menu-btn {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                color: var(--text-primary);
+                padding: 12px;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 16px;
+                transition: all 0.2s ease;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                width: 44px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .menu-btn:hover {
+                background: var(--accent);
+                border-color: var(--accent);
+            }
+            .menu-dropdown {
+                position: fixed;
+                top: 70px;
+                right: 20px;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                z-index: 1000;
+                display: none;
+                flex-direction: column;
+                min-width: 180px;
+                padding: 8px 0;
+            }
+            .menu-dropdown.open {
+                display: flex;
+            }
+            .menu-dropdown button {
+                background: 0 0;
+                border: none;
+                color: var(--text-primary);
+                padding: 10px 15px;
+                text-align: left;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background 0.2s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .menu-dropdown button:hover {
+                background: var(--bg-tertiary);
+            }
+            .options-panel {
+                position: fixed;
+                top: 0;
+                right: -400px;
+                width: 400px;
+                height: 100vh;
+                background: var(--bg-secondary);
+                border-left: 1px solid var(--border);
+                transition: right 0.3s ease;
+                z-index: 999;
+                display: flex;
+                flex-direction: column;
+                box-shadow: -4px 0 12px rgba(0, 0, 0, 0.3);
+            }
+            .options-panel.open {
+                right: 0;
+            }
+            .options-header {
+                padding: 20px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .options-content {
+                flex: 1;
+                padding: 20px;
+                overflow-y: auto;
+            }
+            .option-group {
+                margin-bottom: 24px;
+            }
+            .option-label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 700;
+                color: var(--text-primary);
+            }
+            .option-control {
+                width: 100%;
+                background: var(--bg-tertiary);
+                border: 1px solid var(--border);
+                color: var(--text-primary);
+                padding: 12px;
+                border-radius: 6px;
+                font-family: inherit;
+                font-size: 14px;
+                transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+            }
+            .option-control:focus {
+                outline: 0;
+                border-color: var(--accent);
+            }
+            .zoom-control {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .zoom-slider {
+                flex: 1;
+                accent-color: var(--accent);
+            }
+            .zoom-value {
+                min-width: 50px;
+                text-align: center;
+                font-weight: 700;
+            }
+            .drafts-section {
+                flex: 1;
+            }
+            .drafts-list {
+                max-height: 300px;
+                overflow-y: auto;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background: var(--bg-tertiary);
+            }
+            .draft-item {
+                padding: 12px;
+                border-bottom: 1px solid var(--border);
+                cursor: grab;
+                transition: background 0.2s ease;
+                position: relative;
+            }
+            .draft-item:last-child {
+                border-bottom: 0;
+            }
+            .draft-item:hover {
+                background: var(--bg-primary);
+            }
+            .draft-item.active {
+                background: var(--accent);
+                color: #fff;
+            }
+            .draft-item.dragging {
+                opacity: 0.5;
+                border: 2px dashed var(--accent);
+            }
+            .draft-title {
+                font-weight: 700;
+                margin-bottom: 4px;
+            }
+            .draft-preview {
+                font-size: 12px;
+                color: var(--text-secondary);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .draft-item.active .draft-preview {
+                color: rgba(255, 255, 255, 0.8);
+            }
+            .draft-actions {
+                margin-top: 8px;
+                display: flex;
+                gap: 8px;
+                justify-content: flex-end;
+            }
+            .draft-btn {
+                background: var(--bg-primary);
+                border: 1px solid var(--border);
+                color: var(--text-secondary);
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+            }
+            .draft-btn:hover {
+                color: var(--text-primary);
+                border-color: var(--accent);
+            }
+            .btn {
+                background: var(--bg-tertiary);
+                border: 1px solid var(--border);
+                color: var(--text-primary);
+                padding: 12px 16px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-family: inherit;
+                font-size: 14px;
+                transition: all 0.2s ease;
+            }
+            .btn:hover {
+                background: var(--accent);
+                border-color: var(--accent);
+            }
+            .btn.primary {
+                background: var(--success);
+                border-color: var(--success);
+            }
+            .btn.primary:hover {
+                background: #2ea043;
+            }
+            .editor-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                position: relative;
+            }
+            .editor-content {
+                flex: 1;
+                background: var(--bg-primary);
+                color: var(--text-primary);
+                border: 0;
+                padding: 40px;
+                font-family: inherit;
+                font-size: 16px;
+                line-height: 1.6;
+                letter-spacing: 0;
+                outline: 0;
+                overflow-y: auto;
+                min-height: 100%;
+                word-wrap: break-word;
+                white-space: pre-wrap;
+            }
+            .editor-content:empty::before {
+                content: "Start typing here... Highlight text to format!";
+                color: var(--text-secondary);
+                font-style: italic;
+            }
+            .editor-content h1 {
+                font-size: 2em;
+                font-weight: 700;
+                margin: 0.5em 0;
+                color: var(--accent);
+                border-bottom: 2px solid var(--border);
+                padding-bottom: 0.3em;
+                display: block;
+            }
+            .editor-content h2 {
+                font-size: 1.7em;
+                font-weight: 700;
+                margin: 0.5em 0;
+                color: var(--accent);
+                border-bottom: 1px solid var(--border);
+                padding-bottom: 0.2em;
+                display: block;
+            }
+            .editor-content h3 {
+                font-size: 1.4em;
+                font-weight: 700;
+                margin: 0.5em 0;
+                color: var(--accent);
+                display: block;
+            }
+            .editor-content h4 {
+                font-size: 1.2em;
+                font-weight: 700;
+                margin: 0.5em 0;
+                color: var(--accent);
+                display: block;
+            }
+            .editor-content h5 {
+                font-size: 1.1em;
+                font-weight: 700;
+                margin: 0.5em 0;
+                color: var(--accent);
+                display: block;
+            }
+            .editor-content h6 {
+                font-size: 1em;
+                font-weight: 700;
+                margin: 0.5em 0;
+                color: var(--accent);
+                display: block;
+            }
+            .editor-content strong {
+                font-weight: 700;
+                color: var(--text-primary);
+            }
+            .editor-content em {
+                font-style: italic;
+                color: #ffa657;
+            }
+            .editor-content code {
+                background: var(--bg-tertiary);
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-family: "Courier New", monospace;
+                font-size: 0.9em;
+                color: #f97583;
+            }
+            .editor-content pre {
+                background: var(--bg-tertiary);
+                padding: 16px;
+                border-radius: 8px;
+                margin: 1em 0;
+                overflow-x: auto;
+                font-family: "Courier New", monospace;
+                font-size: 0.9em;
+                color: #f97583;
+            }
+            .editor-content blockquote {
+                border-left: 4px solid var(--accent);
+                padding-left: 16px;
+                margin: 1em 0;
+                color: var(--text-secondary);
+                font-style: italic;
+                background: rgba(88, 166, 255, 0.05);
+                padding: 16px;
+                border-radius: 0 6px 6px 0;
+                display: block;
+            }
+            .editor-content ol,
+            .editor-content ul {
+                padding-left: 24px;
+                margin: 1em 0;
+            }
+            .editor-content li {
+                margin: 0.5em 0;
+            }
+            .markdown-syntax {
+                color: var(--text-secondary);
+                font-size: 0.8em;
+            }
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1001;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                background-color: rgba(0, 0, 0, 0.6);
+                justify-content: center;
+                align-items: center;
+            }
+            .modal-content {
+                background-color: var(--bg-secondary);
+                margin: auto;
+                padding: 20px;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                width: 80%;
+                max-width: 400px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+                text-align: center;
+            }
+            .modal-content p {
+                margin-bottom: 20px;
+                color: var(--text-primary);
+            }
+            .modal-buttons {
+                display: flex;
+                justify-content: space-around;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            .modal-buttons button {
+                flex: 1;
+                padding: 10px 15px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-family: inherit;
+                font-size: 14px;
+                transition: background 0.2s ease;
+            }
+            .modal-buttons .confirm-btn {
+                background-color: var(--danger);
+                color: #fff;
+                border: 1px solid var(--danger);
+            }
+            .modal-buttons .confirm-btn:hover {
+                background-color: #b32d2c;
+            }
+            .modal-buttons .cancel-btn {
+                background-color: var(--bg-tertiary);
+                color: var(--text-primary);
+                border: 1px solid var(--border);
+            }
+            .modal-buttons .cancel-btn:hover {
+                background-color: var(--bg-primary);
+            }
+            .formatting-toolbar {
+                display: none;
+                position: absolute;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                z-index: 1000;
+                gap: 5px;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+            .formatting-toolbar button,
+            .formatting-toolbar input[type="color"] {
+                background: var(--bg-tertiary);
+                border: 1px solid var(--border);
+                color: var(--text-primary);
+                padding: 8px 12px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background 0.2s, border-color 0.2s;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                width: 40px;
+                height: 40px;
+                padding: 0;
+            }
+            .formatting-toolbar button:hover,
+            .formatting-toolbar input[type="color"]:hover {
+                background: var(--accent);
+                border-color: var(--accent);
+            }
+            .formatting-toolbar input[type="color"]::-webkit-color-swatch-wrapper {
+                padding: 0;
+            }
+            .formatting-toolbar input[type="color"]::-webkit-color-swatch {
+                border: none;
+                border-radius: 4px;
+            }
+            .formatting-toolbar input[type="color"]::-moz-color-swatch-wrapper {
+                padding: 0;
+            }
+            .formatting-toolbar input[type="color"]::-moz-color-swatch {
+                border: none;
+                border-radius: 4px;
+            }
+            .search-replace-bar {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: var(--bg-secondary);
+                border-top: 1px solid var(--border);
+                padding: 10px 20px;
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                z-index: 990;
+                transform: translateY(100%);
+                transition: transform 0.3s ease-out;
+            }
+            .search-replace-bar.open {
+                transform: translateY(0);
+            }
+            .search-replace-bar input {
+                flex: 1;
+                background: var(--bg-tertiary);
+                border: 1px solid var(--border);
+                color: var(--text-primary);
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-family: inherit;
+                font-size: 14px;
+            }
+            .search-replace-bar button {
+                background: var(--accent);
+                border: 1px solid var(--accent);
+                color: #fff;
+                padding: 8px 12px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background 0.2s ease;
+            }
+            .search-replace-bar button:hover {
+                background: var(--accent-hover);
+                border-color: var(--accent-hover);
+            }
+            .search-replace-bar .close-btn {
+                background: 0 0;
+                border: none;
+                color: var(--text-secondary);
+                font-size: 20px;
+                cursor: pointer;
+                padding: 0 5px;
+            }
+            .search-replace-bar .close-btn:hover {
+                color: var(--text-primary);
+            }
+            .highlight {
+                background-color: rgba(255, 255, 0, 0.5);
+                border-radius: 2px;
+            }
+            #fileInput {
+                display: none;
+            }
+            .embed-container {
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                overflow: hidden;
+                margin: 1em auto;
+                position: relative;
+                padding-bottom: 56.25%;
+                height: 0;
+                max-width: 100%;
+                background-color: var(--bg-tertiary);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                clear: both;
+            }
+            .embed-container iframe {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                border: none;
+            }
+            .embed-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                color: #fff;
+                cursor: pointer;
+                font-size: 1.2em;
+                text-align: center;
+            }
+            .embed-overlay .play-button {
+                font-size: 3em;
+                margin-bottom: 10px;
+            }
+            .embed-overlay:hover {
+                background: rgba(0, 0, 0, 0.5);
+            }
+            .embed-controls {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                z-index: 10;
+                display: flex;
+                gap: 8px;
+                opacity: 0;
+                transform: translateY(-20px);
+                transition: opacity 0.3s ease, transform 0.3s ease;
+            }
+            .embed-controls button {
+                background: rgba(0, 0, 0, 0.6);
+                color: #fff;
+                border: none;
+                border-radius: 5px;
+                padding: 5px 10px;
+                cursor: pointer;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .embed-controls button:hover {
+                background: rgba(0, 0, 0, 0.8);
+            }
+            .fullscreen-modal {
+                display: none;
+                position: fixed;
+                z-index: 2000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                background-color: rgba(0, 0, 0, 0.9);
+                justify-content: center;
+                align-items: center;
+            }
+            .fullscreen-modal.active {
+                display: flex;
+            }
+            .fullscreen-modal iframe {
+                width: 90%;
+                height: 90%;
+                border: none;
+            }
+            .fullscreen-modal .close-fullscreen {
+                position: absolute;
+                top: 20px;
+                right: 30px;
+                color: #fff;
+                font-size: 40px;
+                font-weight: 700;
+                cursor: pointer;
+            }
+            .add-embed-modal .modal-content {
+                max-width: 500px;
+                text-align: left;
+            }
+            .add-embed-modal .modal-content label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: 700;
+            }
+					 .add-table-modal {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: 700;
+						}
+            .add-embed-modal .modal-content input[type="number"],
+            .add-embed-modal .modal-content input[type="text"],
+            .add-embed-modal .modal-content select {
+                width: calc(100% - 24px);
+                padding: 10px 12px;
+                margin-bottom: 15px;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background-color: var(--bg-tertiary);
+                color: var(--text-primary);
+                font-size: 14px;
+            }
+            .add-embed-modal .modal-content input[type="number"] {
+                width: calc(50% - 17px);
+                display: inline-block;
+                margin-right: 10px;
+            }
+            .add-embed-modal .modal-content input[type="number"]:last-of-type {
+                margin-right: 0;
+            }
+            .add-embed-modal .preview-area {
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                min-height: 150px;
+                background-color: var(--bg-primary);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: var(--text-secondary);
+                overflow: hidden;
+                position: relative;
+                margin-bottom: 15px;
+            }
+            .add-embed-modal .preview-area iframe {
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                top: 0;
+                left: 0;
+                border: none;
+            }
+            .add-embed-modal .preview-area p {
+                text-align: center;
+                margin: 0;
+                padding: 10px;
+            }
+            .share-draft-modal .modal-content {
+                max-width: 500px;
+            }
+            .share-draft-modal .share-link-container {
+                background-color: var(--bg-tertiary);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                padding: 10px;
+                word-break: break-all;
+                font-size: 14px;
+                color: var(--text-primary);
+                margin-bottom: 15px;
+                text-align: left;
+            }
+            .share-draft-modal .copy-btn {
+                background-color: var(--accent);
+                color: #fff;
+                border: 1px solid var(--accent);
+                padding: 10px 15px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background 0.2s ease;
+                width: 100%;
+            }
+            .share-draft-modal .copy-btn:hover {
+                background-color: var(--accent-hover);
+            }
+            .share-draft-modal .warning-text {
+                font-size: 0.8em;
+                color: var(--text-secondary);
+                margin-top: 10px;
+            }
+            @media (max-width: 768px) {
+                .options-panel {
+                    width: 100vw;
+                    right: -100vw;
+                }
+                .editor-content {
+                    padding: 20px;
+                    font-size: 14px;
+                }
+                .formatting-toolbar {
+                    flex-direction: row;
+                    flex-wrap: wrap;
+                    max-width: 90vw;
+                }
+                .search-replace-bar {
+                    flex-wrap: wrap;
+                    justify-content: center;
+                }
+                .search-replace-bar button,
+                .search-replace-bar input {
+                    width: 100%;
+                }
+                .add-embed-modal .modal-content input[type="number"] {
+                    width: calc(100% - 24px);
+                    margin-right: 0;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-container">
+            <button class="menu-btn" id="menuBtn">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <div class="menu-dropdown" id="menuDropdown">
+                <button id="openSettingsBtn"><i class="fas fa-cog"></i> Open Settings</button>
+                <button id="downloadFileDropdownBtn"><i class="fas fa-download"></i> Download File</button>
+                <button id="importFileDropdownBtn"><i class="fas fa-file-import"></i> Import File</button>
+                <button id="shareDraftBtn"><i class="fas fa-share-alt"></i> Share Draft</button>
+                <button id="addEmbedBtn"><i class="fas fa-video"></i> Add Embed</button>
+                <button id="addTableBtn"><i class="fas fa-table"></i> Add Table</button>
+            </div>
+            <div class="options-panel" id="optionsPanel">
+                <div class="options-header">
+                    <h3>Settings</h3>
+                </div>
+                <div class="options-content">
+                    <div class="option-group">
+                        <label class="option-label">Draft Title (Optional)</label>
+                        <input class="option-control" id="draftTitle" placeholder="Leave empty to auto-generate from content" />
+                    </div>
+                    <div class="option-group">
+                        <label class="option-label">Text Size</label>
+                        <div class="zoom-control">
+                            <span>Small</span>
+                            <input type="range" class="zoom-slider" id="zoomSlider" min="50" max="200" value="100" />
+                            <span class="zoom-value" id="zoomValue">100%</span>
+                        </div>
+                    </div>
+                    <div class="option-group">
+                        <label class="option-label">Font Preference</label>
+                        <input type="checkbox" id="toggleOpenDyslexic" /> Use OpenDyslexic Font
+                    </div>
+                    <div class="option-group">
+                        <label class="option-label">Theme <input type="checkbox" id="toggleLightMode" /> Light Mode </label>
+                    </div>
+                    <div class="option-group">
+                        <button class="btn primary" id="newDraft">New Draft</button>
+                    </div>
+                    <div class="option-group drafts-section">
+                        <label class="option-label">Drafts</label>
+                        <div class="drafts-list" id="draftsList"></div>
+                    </div>
+                    <div class="option-group">
+                        <label class="option-label">Import File</label>
+                        <input type="file" id="fileInput" accept=".md,.html,.txt" />
+                        <button class="btn" id="importFileBtn">Import File</button>
+                    </div>
+                    <div class="option-group">
+                        <label class="option-label">Download Options</label>
+                        <button class="btn" id="downloadMarkdown">Download .md</button>
+                        <button class="btn" id="downloadHTML">Download .html</button>
+                        <button class="btn" id="downloadTXT">Download .txt</button>
+                    </div>
+                </div>
+            </div>
+            <div class="editor-container">
+                <div class="editor-content" id="editor" contenteditable="true"></div>
+                <div class="search-replace-bar" id="searchReplaceBar">
+                    <input id="searchTerm" placeholder="Find..." />
+                    <input id="replaceTerm" placeholder="Replace with..." />
+                    <button id="findNextBtn" title="Find Next"><i class="fas fa-arrow-down"></i></button>
+                    <button id="findPrevBtn" title="Find Previous"><i class="fas fa-arrow-up"></i></button>
+                    <button id="replaceAllBtn" title="Replace All"><i class="fas fa-redo"></i> All</button>
+                    <button class="close-btn" id="closeSearchBtn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        </div>
+        <div id="formattingToolbar" class="formatting-toolbar">
+            <button data-format="bold"><i class="fas fa-bold"></i></button>
+            <button data-format="italic"><i class="fas fa-italic"></i></button>
+            <button data-format="h1">H1</button>
+            <button data-format="h2">H2</button>
+            <button data-format="h3">H3</button>
+            <button data-format="blockquote"><i class="fas fa-quote-right"></i></button>
+            <button data-format="code"><i class="fas fa-code"></i></button>
+            <button data-format="link"><i class="fas fa-link"></i></button>
+            <input type="color" id="textColorPicker" value="#f0f6fc" />
+            <button id="removeColorBtn" title="Remove Color"><i class="fas fa-paint-brush"></i>&#x20E0;</button>
+        </div>
+        <div id="confirmationModal" class="modal">
+            <div class="modal-content">
+                <div id="addTableModal" class="modal add-table-modal">
+                    <div class="modal-content">
+                        <h3>Add Table</h3>
+                        <label for="numRows">Rows:</label>
+                        <input type="number" id="numRows" value="3" min="1" />
+                        <label for="numColumns">Columns:</label>
+                        <input type="number" id="numColumns" value="3" min="1" />
+                        <label>
+                            <input type="checkbox" id="includeHeaders" />
+                            Include Headers
+                        </label>
+                        <div class="modal-buttons">
+                            <button class="confirm-btn" id="confirmTableBtn">Add Table</button>
+                            <button class="cancel-btn" id="cancelTableBtn">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+                <p id="modalMessage">Are you sure?</p>
+                <div class="modal-buttons">
+                    <button class="confirm-btn" id="modalConfirmBtn">Confirm</button>
+                    <button class="cancel-btn" id="modalCancelBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <div id="fullscreenModal" class="fullscreen-modal">
+            <span class="close-fullscreen" contenteditable="false">&times;</span>
+            <iframe id="fullscreenIframe" src="" frameborder="0" allowfullscreen></iframe>
+        </div>
+        <div id="addEmbedModal" class="modal add-embed-modal">
+            <div class="modal-content">
+                <h3 id="embedModalTitle">Add Embedded Content</h3>
+                <label for="embedUrl">URL:</label>
+                <input id="embedUrl" placeholder="e.g., https://www.youtube.com/embed/dQw4w9WgXcQ" />
+                <label for="embedWidth">Width (px):</label>
+                <input type="number" id="embedWidth" value="560" min="100" />
+                <label for="embedHeight">Height (px):</label>
+                <input type="number" id="embedHeight" value="315" min="100" />
+                <label for="embedInsertionPoint">Insert At:</label>
+                <select id="embedInsertionPoint">
+                    <option value="at-cursor">Current Cursor Position</option>
+                    <option value="beginning">Beginning of Document</option>
+                    <option value="end">End of Document</option>
+                </select>
+                <label>Preview:</label>
+                <div class="preview-area" id="embedPreviewArea">
+                    <p>Enter a URL to see a preview</p>
+                </div>
+                <div class="modal-buttons">
+                    <button class="confirm-btn" id="confirmEmbedBtn">Add Embed</button>
+                    <button class="cancel-btn" id="cancelEmbedBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <div id="shareDraftModal" class="modal share-draft-modal">
+            <div class="modal-content">
+                <h3>Share Your Draft</h3>
+                <p>Copy this link to share your current draft:</p>
+                <div class="share-link-container" id="shareLinkContainer"></div>
+                <button class="copy-btn" id="copyShareLinkBtn"><i class="fas fa-copy"></i> Copy Link</button>
+                <p class="warning-text">Note: Very long drafts might exceed URL character limits.</p>
+                <div class="modal-buttons">
+                    <button class="cancel-btn" id="closeShareModalBtn">Close</button>
+                </div>
+            </div>
+        </div>
+        <script>
+            class LiveMarkdownEditor {
+                addTable(rows, columns, includeHeaders) {
+								let table = "<table>";
+								if (includeHeaders) {
+									table += "<thead><tr>";
+									for (let i = 0; i < columns; i++) {
+										table += "<th>Header " + (i + 1) + "</th>";
+									}
+									table += "</tr></thead>";
+								}
+								table += "<tbody>";
+								for (let i = 0; i < rows; i++) {
+									table += "<tr>";
+									for (let j = 0; j < columns; j++) {
+										table += "<td>Cell</td>";
+									}
+									table += "</tr>";
+								}
+								table += "</tbody></table>";
+								this.insertContentAtCursor(table);
+							 }
+                constructor() {
+                    (this.drafts = []),
+                        (this.currentDraftId = null),
+                        (this.autoSaveTimer = null),
+                        (this.localStorageKey = "markdownEditorDrafts"),
+                        (this.searchResults = []),
+                        (this.currentSearchIndex = -1),
+                        (this.savedRange = null),
+                        (this.editingEmbedId = null),
+                        this.initElements(),
+                        this.bindEvents(),
+                        this.loadSettingsFromLocalStorage(),
+                        this.applySettings(),
+                        this.loadDraftsFromLocalStorage(),
+                        this.checkUrlForSharedContent(),
+                        0 === this.drafts.length ? this.createNewDraft() : this.currentDraftId || this.loadDraft(this.drafts[0].id);
+                }
+                initElements() {
+                    (this.editor = document.getElementById("editor")),
+                        (this.optionsPanel = document.getElementById("optionsPanel")),
+                        (this.draftsList = document.getElementById("draftsList")),
+                        (this.draftTitle = document.getElementById("draftTitle")),
+                        (this.zoomSlider = document.getElementById("zoomSlider")),
+                        (this.zoomValue = document.getElementById("zoomValue")),
+                        (this.menuBtn = document.getElementById("menuBtn")),
+                        (this.menuDropdown = document.getElementById("menuDropdown")),
+                        (this.openSettingsBtn = document.getElementById("openSettingsBtn")),
+                        (this.downloadFileDropdownBtn = document.getElementById("downloadFileDropdownBtn")),
+                        (this.importFileDropdownBtn = document.getElementById("importFileDropdownBtn")),
+                        (this.shareDraftBtn = document.getElementById("shareDraftBtn")),
+                        (this.addEmbedBtn = document.getElementById("addEmbedBtn")),
+                        (this.formattingToolbar = document.getElementById("formattingToolbar")),
+                        (this.formatButtons = this.formattingToolbar.querySelectorAll("button[data-format]")),
+                        (this.textColorPicker = document.getElementById("textColorPicker")),
+                        (this.removeColorBtn = document.getElementById("removeColorBtn")),
+                        (this.confirmationModal = document.getElementById("confirmationModal")),
+                        (this.modalMessage = document.getElementById("modalMessage")),
+                        (this.modalConfirmBtn = document.getElementById("modalConfirmBtn")),
+                        (this.modalCancelBtn = document.getElementById("modalCancelBtn")),
+                        (this.toggleOpenDyslexic = document.getElementById("toggleOpenDyslexic")),
+                        (this.toggleLightMode = document.getElementById("toggleLightMode")),
+                        (this.downloadMarkdownBtn = document.getElementById("downloadMarkdown")),
+                        (this.downloadHTMLBtn = document.getElementById("downloadHTML")),
+                        (this.downloadTXTBtn = document.getElementById("downloadTXT")),
+                        (this.searchReplaceBar = document.getElementById("searchReplaceBar")),
+                        (this.searchTermInput = document.getElementById("searchTerm")),
+                        (this.replaceTermInput = document.getElementById("replaceTerm")),
+                        (this.findNextBtn = document.getElementById("findNextBtn")),
+                        (this.findPrevBtn = document.getElementById("findPrevBtn")),
+                        (this.replaceAllBtn = document.getElementById("replaceAllBtn")),
+                        (this.closeSearchBtn = document.getElementById("closeSearchBtn")),
+                        (this.fileInput = document.getElementById("fileInput")),
+                        (this.importFileBtn = document.getElementById("importFileBtn")),
+                        (this.fullscreenModal = document.getElementById("fullscreenModal")),
+                        (this.fullscreenIframe = document.getElementById("fullscreenIframe")),
+                        (this.closeFullscreenBtn = document.querySelector(".close-fullscreen")),
+                        (this.addEmbedModal = document.getElementById("addEmbedModal")),
+                        (this.embedModalTitle = document.getElementById("embedModalTitle")),
+                        (this.embedUrlInput = document.getElementById("embedUrl")),
+                        (this.embedWidthInput = document.getElementById("embedWidth")),
+                        (this.embedHeightInput = document.getElementById("embedHeight")),
+                        (this.embedInsertionPointSelect = document.getElementById("embedInsertionPoint")),
+                        (this.embedPreviewArea = document.getElementById("embedPreviewArea")),
+                        (this.confirmEmbedBtn = document.getElementById("confirmEmbedBtn")),
+                        (this.cancelEmbedBtn = document.getElementById("cancelEmbedBtn")),
+                        (this.shareDraftModal = document.getElementById("shareDraftModal")),
+                        (this.shareLinkContainer = document.getElementById("shareLinkContainer")),
+                        (this.copyShareLinkBtn = document.getElementById("copyShareLinkBtn")),
+                        (this.closeShareModalBtn = document.getElementById("closeShareModalBtn"));
+                }
+                bindEvents() {
+                    this.menuBtn.addEventListener("click", (e) => {
+                        if ((e.stopPropagation(), this.optionsPanel.classList.contains("open"))) this.optionsPanel.classList.remove("open"), (this.menuBtn.innerHTML = '<i class="fas fa-ellipsis-v"></i>');
+                        else {
+                            this.menuDropdown.classList.toggle("open") && (this.optionsPanel.classList.remove("open"), (this.menuBtn.innerHTML = '<i class="fas fa-ellipsis-v"></i>'));
+                        }
+                    }),
+                        document.addEventListener("click", (e) => {
+                            this.menuDropdown.contains(e.target) || this.menuBtn.contains(e.target) || this.menuDropdown.classList.remove("open"),
+                                this.optionsPanel.contains(e.target) ||
+                                    this.menuBtn.contains(e.target) ||
+                                    this.openSettingsBtn.contains(e.target) ||
+                                    (this.optionsPanel.classList.remove("open"), (this.menuBtn.innerHTML = '<i class="fas fa-ellipsis-v"></i>'));
+                        }),
+                        this.openSettingsBtn.addEventListener("click", () => {
+                            this.optionsPanel.classList.add("open"), this.menuDropdown.classList.remove("open"), (this.menuBtn.innerHTML = '<i class="fas fa-times"></i>');
+                        }),
+                        this.downloadFileDropdownBtn.addEventListener("click", () => {
+                            this.optionsPanel.classList.add("open"), this.menuDropdown.classList.remove("open"), (this.menuBtn.innerHTML = '<i class="fas fa-times"></i>');
+                        }),
+                        this.importFileDropdownBtn.addEventListener("click", () => {
+                            this.fileInput.click(), this.menuDropdown.classList.remove("open");
+                        }),
+                        this.shareDraftBtn.addEventListener("click", () => {
+                            this.showShareDraftModal(), this.menuDropdown.classList.remove("open");
+                        }),
+                        this.addEmbedBtn.addEventListener("click", () => {
+                            this.showAddEmbedModal(), this.menuDropdown.classList.remove("open");
+                        }),
+                        this.zoomSlider.addEventListener("input", (e) => {
+                            const t = e.target.value;
+                            (this.editor.style.fontSize = (t / 100) * 16 + "px"), (this.zoomValue.textContent = `${t}%`);
+                        }),
+                        document.getElementById("newDraft").addEventListener("click", () => {
+                            this.createNewDraft();
+                        }),
+                        this.editor.addEventListener("input", () => {
+                            this.scheduleAutoSave(), this.clearSearchResults();
+                        }),
+                        this.editor.addEventListener("mouseup", this.handleSelectionChange.bind(this)),
+                        this.editor.addEventListener("keyup", this.handleSelectionChange.bind(this)),
+                        document.addEventListener("mousedown", (e) => {
+                            this.formattingToolbar.contains(e.target) || this.editor.contains(e.target) || this.searchReplaceBar.contains(e.target) || this.hideToolbar();
+                        }),
+                        this.draftTitle.addEventListener("input", () => {
+                            this.scheduleAutoSave();
+                        }),
+                        this.formatButtons.forEach((e) => {
+                            e.addEventListener("click", (e) => {
+                                e.preventDefault();
+                                const t = e.currentTarget.dataset.format;
+                                this.applyFormat(t), this.hideToolbar();
+                            });
+                        }),
+                        this.editor.addEventListener("keydown", (e) => {
+                            "Tab" === e.key
+                                ? (e.preventDefault(), document.execCommand("insertText", !1, "    "))
+                                : (e.ctrlKey || e.metaKey) && ("b" === e.key || "i" === e.key || "u" === e.key || "`" === e.key ? e.preventDefault() : "f" === e.key && (e.preventDefault(), this.toggleSearchReplaceBar(!0)));
+                        }),
+                        this.textColorPicker.addEventListener("input", (e) => {
+                            const t = e.target.value;
+                            this.applyColor(t), this.scheduleAutoSave(), this.hideToolbar();
+                        }),
+                        this.removeColorBtn.addEventListener("click", (e) => {
+                            e.preventDefault(), this.removeColor(), this.scheduleAutoSave(), this.hideToolbar();
+                        }),
+                        this.toggleOpenDyslexic.addEventListener("change", (e) => {
+                            (this.settings.useOpenDyslexic = e.target.checked), this.applySettings(), this.saveSettingsToLocalStorage();
+                        }),
+                        this.toggleLightMode.addEventListener("change", (e) => {
+                            (this.settings.lightMode = e.target.checked), this.applySettings(), this.saveSettingsToLocalStorage();
+                        }),
+                        this.downloadMarkdownBtn.addEventListener("click", () => this.downloadContent("md")),
+                        this.downloadHTMLBtn.addEventListener("click", () => this.downloadContent("html")),
+                        this.downloadTXTBtn.addEventListener("click", () => this.downloadContent("txt")),
+                        this.searchTermInput.addEventListener("input", this.findText.bind(this)),
+                        this.findNextBtn.addEventListener("click", () => this.navigateToSearchResult(1)),
+                        this.findPrevBtn.addEventListener("click", () => this.navigateToSearchResult(-1)),
+                        this.replaceAllBtn.addEventListener("click", this.replaceAll.bind(this)),
+                        this.closeSearchBtn.addEventListener("click", this.toggleSearchReplaceBar.bind(this, !1)),
+                        this.editor.addEventListener("keydown", (e) => {
+                            "Escape" === e.key && this.searchReplaceBar.classList.contains("open") && this.toggleSearchReplaceBar(!1);
+                        }),
+                        this.importFileBtn.addEventListener("click", () => this.fileInput.click()),
+                        this.fileInput.addEventListener("change", this.importFile.bind(this)),
+                        this.closeFullscreenBtn.addEventListener("click", () => {
+                            this.fullscreenModal.classList.remove("active"), (this.fullscreenIframe.src = "");
+                        }),
+                        this.embedUrlInput.addEventListener("input", this.updateEmbedPreview.bind(this)),
+                        this.embedWidthInput.addEventListener("input", this.updateEmbedPreview.bind(this)),
+                        this.embedHeightInput.addEventListener("input", this.updateEmbedPreview.bind(this)),
+                        this.confirmEmbedBtn.addEventListener("click", () => {
+                            const e = this.embedUrlInput.value,
+                                t = this.embedWidthInput.value,
+                                n = this.embedHeightInput.value,
+                                s = this.embedInsertionPointSelect.value;
+                            e
+                                ? (this.editingEmbedId ? this.updateEmbed(this.editingEmbedId, e, t, n) : this.insertEmbed(e, t, n, s), (this.addEmbedModal.style.display = "none"), this.scheduleAutoSave())
+                                : this.showConfirmationModal("Please enter a URL for the embed.");
+                        }),
+                        this.cancelEmbedBtn.addEventListener("click", () => {
+                            (this.addEmbedModal.style.display = "none"), (this.editingEmbedId = null);
+                        }),
+                        this.copyShareLinkBtn.addEventListener("click", () => {
+                            const e = this.shareLinkContainer.textContent;
+                            if (e) {
+                                document.execCommand("copy");
+                                const t = document.createElement("textarea");
+                                (t.value = e), document.body.appendChild(t), t.select(), document.execCommand("copy"), t.remove(), this.showConfirmationModal("Link copied to clipboard!");
+                            }
+                        }),
+                        this.closeShareModalBtn.addEventListener("click", () => {
+                            this.shareDraftModal.style.display = "none";
+                        });
+                }
+                handleSelectionChange() {
+                    const e = window.getSelection();
+                    if (!e.isCollapsed && this.editor.contains(e.focusNode) && this.editor.contains(e.anchorNode)) {
+                        const t = e.getRangeAt(0).getBoundingClientRect();
+                        let n = t.top + window.scrollY - this.formattingToolbar.offsetHeight - 10,
+                            s = t.left + window.scrollX + t.width / 2 - this.formattingToolbar.offsetWidth / 2;
+                        n < window.scrollY + 10 && (n = t.bottom + window.scrollY + 10),
+                            s < window.scrollX + 10 && (s = window.scrollX + 10),
+                            s + this.formattingToolbar.offsetWidth > window.innerWidth - 10 && (s = window.innerWidth - this.formattingToolbar.offsetWidth - 10),
+                            (this.formattingToolbar.style.display = "flex"),
+                            (this.formattingToolbar.style.left = `${s}px`),
+                            (this.formattingToolbar.style.top = `${n}px`);
+                    } else this.hideToolbar();
+                }
+                hideToolbar() {
+                    this.formattingToolbar.style.display = "none";
+                }
+                applyFormat(e) {
+                    this.editor.focus(), this.clearSearchResults();
+                    const t = window.getSelection();
+                    if (!t.rangeCount) return;
+                    const n = t.getRangeAt(0);
+                    let s = n.commonAncestorContainer;
+                    switch ((s.nodeType === Node.TEXT_NODE && (s = s.parentElement), e)) {
+                        case "bold":
+                            document.execCommand("bold", !1, null);
+                            break;
+                        case "italic":
+                            document.execCommand("italic", !1, null);
+                            break;
+                        case "h1":
+                            document.execCommand("formatBlock", !1, "<h1>");
+                            break;
+                        case "h2":
+                            document.execCommand("formatBlock", !1, "<h2>");
+                            break;
+                        case "h3":
+                            document.execCommand("formatBlock", !1, "<h3>");
+                            break;
+                        case "blockquote":
+                            (s ? s.closest("blockquote") : null) ? document.execCommand("formatBlock", !1, "<div>") : document.execCommand("formatBlock", !1, "<blockquote>");
+                            break;
+                        case "code":
+                            const i = s ? s.closest("code") : null,
+                                o = s ? s.closest("pre") : null;
+                            if (i && o) {
+                                const e = document.createDocumentFragment();
+                                for (; i.firstChild; ) e.appendChild(i.firstChild);
+                                o.parentNode.insertBefore(e, o), o.parentNode.removeChild(o);
+                            } else {
+                                const e = n.extractContents(),
+                                    s = document.createElement("pre"),
+                                    i = document.createElement("code");
+                                i.appendChild(e), s.appendChild(i), n.insertNode(s), n.selectNodeContents(i), t.removeAllRanges(), t.addRange(n);
+                            }
+                            break;
+                        case "link":
+                            const a = prompt("Enter the URL:", "https://");
+                            a && document.execCommand("createLink", !1, a);
+                            break;
+                        default:
+                            console.warn("Unknown format command:", e);
+                    }
+                    this.scheduleAutoSave();
+                }
+                applyColor(e) {
+                    this.editor.focus();
+                    const t = window.getSelection();
+                    if (!t.rangeCount) return;
+                    const n = t.getRangeAt(0);
+                    if (t.isCollapsed) {
+                        const s = n.commonAncestorContainer.closest('span[style*="color"], font[color]');
+                        if (s) "span" === s.tagName.toLowerCase() ? (s.style.color = e) : "font" === s.tagName.toLowerCase() && (s.color = e);
+                        else {
+                            const s = document.createElement("span");
+                            (s.style.color = e), n.insertNode(s), n.setStart(s, 0), n.collapse(!0), t.removeAllRanges(), t.addRange(n);
+                        }
+                    } else {
+                        const s = n.extractContents(),
+                            i = document.createElement("div");
+                        i.appendChild(s),
+                            i.querySelectorAll('span[style*="color"], font[color]').forEach((e) => {
+                                for (; e.firstChild; ) e.parentNode.insertBefore(e.firstChild, e);
+                                e.parentNode.removeChild(e);
+                            });
+                        const o = document.createElement("span");
+                        for (o.style.color = e; i.firstChild; ) o.appendChild(i.firstChild);
+                        n.insertNode(o), t.removeAllRanges(), t.addRange(n);
+                    }
+                    this.scheduleAutoSave();
+                }
+                removeColor() {
+                    this.editor.focus();
+                    const e = window.getSelection();
+                    if (!e.rangeCount) return;
+                    const t = e.getRangeAt(0),
+                        n = t.extractContents(),
+                        s = document.createElement("div");
+                    s.appendChild(n),
+                        s.querySelectorAll('span[style*="color"], font[color]').forEach((e) => {
+                            for (; e.firstChild; ) e.parentNode.insertBefore(e.firstChild, e);
+                            e.parentNode.removeChild(e);
+                        }),
+                        t.insertNode(s),
+                        e.removeAllRanges(),
+                        e.addRange(t),
+                        this.scheduleAutoSave();
+                }
+                placeCursorAtEnd() {
+                    const e = window.getSelection(),
+                        t = document.createRange();
+                    this.editor.lastChild
+                        ? this.editor.lastChild.nodeType === Node.TEXT_NODE
+                            ? t.setStart(this.editor.lastChild, this.editor.lastChild.textContent.length)
+                            : t.setStartAfter(this.editor.lastChild)
+                        : t.setStart(this.editor, 0),
+                        t.collapse(!0),
+                        e.removeAllRanges(),
+                        e.addRange(t);
+                }
+                scheduleAutoSave() {
+                    clearTimeout(this.autoSaveTimer),
+                        (this.autoSaveTimer = setTimeout(() => {
+                            this.saveDraft(), this.saveDraftsToLocalStorage();
+                        }, 1e3));
+                }
+                createNewDraft(e = "", t = "") {
+                    this.saveDraft();
+                    const n = { id: Date.now(), title: t, content: e, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+                    this.drafts.unshift(n), this.loadDraft(n.id), this.renderDrafts(), this.saveDraftsToLocalStorage();
+                }
+                loadDraft(e) {
+                    const t = this.drafts.find((t) => t.id === e);
+                    if (t) {
+                        (this.currentDraftId = e), (this.draftTitle.value = t.title);
+                        const n = this.convertCustomSyntaxToHtml(t.content);
+                        (this.editor.innerHTML = n), this.renderDrafts(), this.placeCursorAtEnd(), this.clearSearchResults();
+                    }
+                }
+                saveDraft() {
+                    if (!this.currentDraftId) return;
+                    const e = this.drafts.find((e) => e.id === this.currentDraftId);
+                    if (e) {
+                        const t = this.editor.innerHTML,
+                            n = this.convertHtmlToCustomSyntax(t),
+                            s = this.editor.textContent || "";
+                        (e.title = this.draftTitle.value || this.generateTitleFromContent(s)), (e.content = n), (e.updatedAt = new Date().toISOString()), this.renderDrafts();
+                    }
+                }
+                convertNodeToCustomSyntax(e) {
+                    if (e.nodeType === Node.TEXT_NODE) return e.nodeValue;
+                    if (e.nodeType === Node.ELEMENT_NODE) {
+                        let t = Array.from(e.childNodes)
+                            .map((e) => this.convertNodeToCustomSyntax(e))
+                            .join("");
+                        const n = e.tagName.toLowerCase();
+                        let s = !1,
+                            i = "";
+                        if (("span" === n && e.style.color ? ((s = !0), (i = e.style.color)) : "font" === n && e.color && ((s = !0), (i = e.color)), s)) {
+                            let e = "";
+                            const n = i.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+                            if (n) {
+                                const t = (e) => parseInt(e).toString(16).padStart(2, "0");
+                                e = `${t(n[1])}${t(n[2])}${t(n[3])}`;
+                            } else if (i.startsWith("#")) e = i.substring(1);
+                            else {
+                                if (!i) return console.warn(`Could not convert color '${i}' to hex for custom syntax. Returning inner content.`), t;
+                                {
+                                    const n = document.createElement("div");
+                                    (n.style.color = i), document.body.appendChild(n);
+                                    const s = window.getComputedStyle(n).color;
+                                    document.body.removeChild(n);
+                                    const o = s.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+                                    if (!o) return console.warn(`Could not convert named color '${i}' to hex for custom syntax. Returning inner content.`), t;
+                                    {
+                                        const t = (e) => parseInt(e).toString(16).padStart(2, "0");
+                                        e = `${t(o[1])}${t(o[2])}${t(o[3])}`;
+                                    }
+                                }
+                            }
+                            return `<#${e}>${t}</>`;
+                        }
+                        if (e.classList.contains("embed-container") && e.dataset.href) {
+                            return `<embed href="${e.dataset.href}" width="${e.dataset.width || ""}" height="${e.dataset.height || ""}" data-id="${e.dataset.id || ""}"/>`;
+                        }
+                        const o = e.tagName.toLowerCase(),
+                            a = Array.from(e.attributes)
+                                .map((e) => `${e.name}="${e.value}"`)
+                                .join(" ");
+                        return "br" === o ? "<br>" : `<${o}${a ? " " + a : ""}>${t}</${o}>`;
+                    }
+                    return "";
+                }
+                convertHtmlToCustomSyntax(e) {
+                    const t = new DOMParser().parseFromString(e, "text/html");
+                    let n = "";
+                    return (
+                        Array.from(t.body.childNodes).forEach((e) => {
+                            n += this.convertNodeToCustomSyntax(e);
+                        }),
+                        n
+                    );
+                }
+                convertCustomSyntaxToHtml(e) {
+                    let t = e;
+                    return (
+                        (t = t.replace(/<#([0-9a-fA-F]{3,6})>(.*?)<\/>/gs, (e, t, n) => `<span style="color: #${t}">${n}</span>`)),
+                        (t = t.replace(
+                            /<embed href="(.*?)"(?: width="(.*?)")?(?: height="(.*?)")?(?: data-id="(.*?)")?\/>/gs,
+                            (e, t, n = "", s = "", i = Date.now()) =>
+                                `\n                    <div class="embed-container" data-href="${t}" data-width="${n}" data-height="${s}" data-id="${i}" ${
+                                    n || s ? `style="${n ? `width:${n}px;` : ""}${s ? `height:${s}px;` : ""}"` : ""
+                                } contenteditable="false">\n                        <div class="embed-overlay">\n                            <i class="fas fa-play-circle play-button"></i>\n                            <span>Click to view embedded content</span>\n                        </div>\n                        <div class="embed-controls">\n                            <button class="edit-embed-btn" data-id="${i}" contenteditable="false"><i class="fas fa-edit"></i> Edit</button>\n                            <button class="delete-embed-btn" data-id="${i}" contenteditable="false"><i class="fas fa-trash"></i> Delete</button>\n                        </div>\n                    </div>\n                `
+                        )),
+                        this.applyMarkdownFormatting(t)
+                    );
+                }
+                applyMarkdownFormatting(e) {
+                    let t = e;
+                    return (
+                        (t = t.replace(/^###### (.*$)/gim, "<h6>$1</h6>")),
+                        (t = t.replace(/^##### (.*$)/gim, "<h5>$1</h5>")),
+                        (t = t.replace(/^#### (.*$)/gim, "<h4>$1</h4>")),
+                        (t = t.replace(/^### (.*$)/gim, "<h3>$1</h3>")),
+                        (t = t.replace(/^## (.*$)/gim, "<h2>$1</h2>")),
+                        (t = t.replace(/^# (.*$)/gim, "<h1>$1</h1>")),
+                        (t = t.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")),
+                        (t = t.replace(/__(.*?)__/g, "<strong>$1</strong>")),
+                        (t = t.replace(/\*(.*?)\*/g, "<em>$1</em>")),
+                        (t = t.replace(/_(.*?)_/g, "<em>$1</em>")),
+                        (t = t.replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")),
+                        (t = t.replace(/`([^`]+)`/g, "<code>$1</code>")),
+                        (t = t.replace(/^> (.*$)/gim, "<blockquote>$1</blockquote>")),
+                        (t = t.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>')),
+                        (t = t.replace(/<ul>([\s\S]*?)<\/ul>/gs, (e, t) =>
+                            t.replace(/<li>([\s\S]*?)<\/li>/g, (e, t) => {
+                                const n = t.trim().split("\n");
+                                return (
+                                    `- ${n[0]}\n` +
+                                    n
+                                        .slice(1)
+                                        .map((e) => `  ${e}`)
+                                        .join("\n") +
+                                    "\n"
+                                );
+                            })
+                        )),
+                        (t = t.replace(/<ol>([\s\S]*?)<\/ol>/gs, (e, t) => {
+                            let n = 1;
+                            return t.replace(/<li>([\s\S]*?)<\/li>/g, (e, t) => {
+                                const s = t.trim().split("\n");
+                                return (
+                                    `${n++}. ${s[0]}\n` +
+                                    s
+                                        .slice(1)
+                                        .map((e) => `   ${e}`)
+                                        .join("\n") +
+                                    "\n"
+                                );
+                            });
+                        })),
+                        (t = t.replace(/<br\s*\/?>/g, "\n")),
+                        (t = t.replace(/\n{3,}/g, "\n\n").trim()),
+                        t
+                    );
+                }
+                renderContent() {
+                    this.addEmbedListeners();
+                }
+                addEmbedListeners() {
+                    document.querySelectorAll(".embed-container").forEach((e) => {
+                        if (!e.dataset.listenerAdded) {
+                            const t = e.querySelector(".embed-overlay");
+                            t && t.addEventListener("click", (t) => this.handleEmbedClick(t, e));
+                            const n = e.querySelector(".edit-embed-btn");
+                            n &&
+                                n.addEventListener("click", (e) => {
+                                    e.stopPropagation(), this.editEmbed(parseInt(n.dataset.id));
+                                });
+                            const s = e.querySelector(".delete-embed-btn");
+                            s &&
+                                s.addEventListener("click", (e) => {
+                                    e.stopPropagation(), this.deleteEmbed(parseInt(s.dataset.id));
+                                }),
+                                (e.dataset.listenerAdded = "true");
+                        }
+                    });
+                }
+                handleEmbedClick(e, t) {
+                    const n = t.dataset.href;
+                    if (n) {
+                        const e = t.querySelector(".embed-overlay");
+                        e && e.remove();
+                        const s = document.createElement("iframe");
+                        (s.src = n), s.setAttribute("frameborder", "0"), s.setAttribute("allowfullscreen", ""), (s.dataset.href = n), t.appendChild(s);
+                    }
+                }
+                openFullscreenEmbed(e) {
+                    (this.fullscreenIframe.src = e), this.fullscreenModal.classList.add("active");
+                }
+                generateTitleFromContent(e) {
+                    if (!e.trim()) return "Untitled Draft";
+                    const t = e.split("\n")[0] || "";
+                    return t.substring(0, 20) + (t.length > 20 ? "..." : "") || "Untitled Draft";
+                }
+                showConfirmationModal(e) {
+                    return new Promise((t) => {
+                        (this.modalMessage.textContent = e), (this.confirmationModal.style.display = "flex");
+                        const n = () => {
+                                (this.confirmationModal.style.display = "none"), this.modalConfirmBtn.removeEventListener("click", n), this.modalCancelBtn.removeEventListener("click", s), t(!0);
+                            },
+                            s = () => {
+                                (this.confirmationModal.style.display = "none"), this.modalConfirmBtn.removeEventListener("click", n), this.modalCancelBtn.removeEventListener("click", s), t(!1);
+                            };
+                        this.modalConfirmBtn.addEventListener("click", n), this.modalCancelBtn.addEventListener("click", s);
+                    });
+                }
+                async deleteDraft(e) {
+                    (await this.showConfirmationModal("Are you sure you want to delete this draft?")) &&
+                        ((this.drafts = this.drafts.filter((t) => t.id !== e)),
+                        this.currentDraftId === e && (this.drafts.length > 0 ? this.loadDraft(this.drafts[0].id) : this.createNewDraft()),
+                        this.renderDrafts(),
+                        this.saveDraftsToLocalStorage());
+                }
+                renderDrafts() {
+                    (this.draftsList.innerHTML = ""),
+                        0 !== this.drafts.length
+                            ? (this.drafts.forEach((e) => {
+                                  const t = document.createElement("div");
+                                  (t.className = "draft-item " + (e.id === this.currentDraftId ? "active" : "")), (t.draggable = !0), (t.dataset.id = e.id);
+                                  const n = document.createElement("div");
+                                  n.innerHTML = this.convertCustomSyntaxToHtml(e.content);
+                                  const s = n.textContent || n.innerText || "",
+                                      i = e.title || this.generateTitleFromContent(s),
+                                      o = s.substring(0, 50) + (s.length > 50 ? "..." : "");
+                                  (t.innerHTML = `\n                    <div class="draft-info">\n                        <div class="draft-title">${i}</div>\n                        <div class="draft-preview">${
+                                      o || "Empty draft"
+                                  }</div>\n                    </div>\n                    <div class="draft-actions">\n                        <button class="draft-btn" data-action="delete" data-id="${
+                                      e.id
+                                  }">Delete</button>\n                    </div>\n                `),
+                                      t.querySelector(".draft-info").addEventListener("click", (t) => {
+                                          t.stopPropagation(), this.loadDraft(e.id);
+                                      }),
+                                      t.querySelector('[data-action="delete"]').addEventListener("click", (e) => {
+                                          e.stopPropagation(), this.deleteDraft(parseInt(e.target.dataset.id));
+                                      }),
+                                      t.addEventListener("dragstart", (n) => {
+                                          n.dataTransfer.setData("text/plain", e.id), t.classList.add("dragging");
+                                      }),
+                                      t.addEventListener("dragend", () => {
+                                          t.classList.remove("dragging");
+                                      }),
+                                      this.draftsList.appendChild(t);
+                              }),
+                              this.draftsList.addEventListener("dragover", (e) => {
+                                  e.preventDefault();
+                                  const t = document.querySelector(".draft-item.dragging");
+                                  if (t) {
+                                      const n = this.getDragAfterElement(this.draftsList, e.clientY);
+                                      null == n ? this.draftsList.appendChild(t) : this.draftsList.insertBefore(t, n);
+                                  }
+                              }),
+                              this.draftsList.addEventListener("drop", (e) => {
+                                  e.preventDefault();
+                                  const t = parseInt(e.dataTransfer.getData("text/plain"));
+                                  if (this.drafts.find((e) => e.id === t)) {
+                                      const e = Array.from(this.draftsList.children).map((e) => parseInt(e.dataset.id)),
+                                          t = [];
+                                      for (const n of e) {
+                                          const e = this.drafts.find((e) => e.id === n);
+                                          e && t.push(e);
+                                      }
+                                      (this.drafts = t), this.saveDraftsToLocalStorage();
+                                  }
+                              }),
+                              this.addEmbedListeners())
+                            : (this.draftsList.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 2rem;">No drafts</div>');
+                }
+                getDragAfterElement(e, t) {
+                    return [...e.querySelectorAll(".draft-item:not(.dragging)")].reduce(
+                        (e, n) => {
+                            const s = n.getBoundingClientRect(),
+                                i = t - s.top - s.height / 2;
+                            return i < 0 && i > e.offset ? { offset: i, element: n } : e;
+                        },
+                        { offset: Number.NEGATIVE_INFINITY }
+                    ).element;
+                }
+                saveDraftsToLocalStorage() {
+                    try {
+                        const e = this.drafts.map((e) => ({ ...e, createdAt: e.createdAt instanceof Date ? e.createdAt.toISOString() : e.createdAt, updatedAt: e.updatedAt instanceof Date ? e.updatedAt.toISOString() : e.updatedAt }));
+                        localStorage.setItem(this.localStorageKey, JSON.stringify(e)), console.log("Drafts saved to localStorage ✅");
+                    } catch (e) {
+                        console.error("Failed to save drafts to localStorage:", e);
+                    }
+                }
+                loadDraftsFromLocalStorage() {
+                    try {
+                        const e = localStorage.getItem(this.localStorageKey);
+                        e &&
+                            ((this.drafts = JSON.parse(e).map((e) => ({ ...e, createdAt: new Date(e.createdAt), updatedAt: new Date(e.updatedAt) }))),
+                            this.drafts.forEach((e) => {
+                                e.content = this.convertCustomSyntaxToHtml(e.content);
+                            }),
+                            console.log("Drafts loaded from localStorage ✨"));
+                    } catch (e) {
+                        console.error("Failed to load drafts from localStorage:", e);
+                    }
+                }
+                settings = { useOpenDyslexic: !0, lightMode: !1 };
+                saveSettingsToLocalStorage() {
+                    try {
+                        localStorage.setItem("markdownEditorSettings", JSON.stringify(this.settings)), console.log("Settings saved to localStorage ⚙️");
+                    } catch (e) {
+                        console.error("Couldn't save settings to localStorage:", e);
+                    }
+                }
+                loadSettingsFromLocalStorage() {
+                    try {
+                        const e = localStorage.getItem("markdownEditorSettings");
+                        e && ((this.settings = { ...this.settings, ...JSON.parse(e) }), console.log("Settings loaded from localStorage 🚀"));
+                    } catch (e) {
+                        console.error("Failed to load settings from localStorage:", e);
+                    }
+                }
+                applySettings() {
+                    this.settings.useOpenDyslexic
+                        ? (document.body.classList.add("use-opendyslexic"), (this.editor.style.fontFamily = "'OpenDyslexic', Arial, sans-serif"))
+                        : (document.body.classList.remove("use-opendyslexic"), (this.editor.style.fontFamily = "Arial, sans-serif")),
+                        (this.toggleOpenDyslexic.checked = this.settings.useOpenDyslexic),
+                        this.settings.lightMode ? document.body.classList.add("light-mode") : document.body.classList.remove("light-mode"),
+                        (this.toggleLightMode.checked = this.settings.lightMode);
+                }
+                downloadContent(e) {
+                    const t = this.drafts.find((e) => e.id === this.currentDraftId);
+                    if (!t) return void this.showConfirmationModal("No draft selected to download.");
+                    let n = (t.title || "untitled").replace(/[^a-z0-9]/gi, "_").toLowerCase(),
+                        s = "",
+                        i = "";
+                    const o = document.createElement("div");
+                    switch (((o.innerHTML = this.editor.innerHTML), e)) {
+                        case "md":
+                            o.querySelectorAll('span[style*="color"], font[color]').forEach((e) => {
+                                e.outerHTML = e.textContent;
+                            }),
+                                o.querySelectorAll(".embed-container").forEach((e) => {
+                                    e.outerHTML = "";
+                                }),
+                                (s = this.convertHtmlToMarkdown(o.innerHTML)),
+                                (i = "text/markdown"),
+                                (n += ".md");
+                            break;
+                        case "html":
+                            (s = this.editor.innerHTML), (i = "text/html"), (n += ".html");
+                            break;
+                        case "txt":
+                            (s = o.textContent || o.innerText || ""),
+                                (s = s.replace(/<#([0-9a-fA-F]{3,6})>(.*?)<\/>/gs, "$2")),
+                                (s = s.replace(/<embed href="(.*?)"(?: width="(.*?)")?(?: height="(.*?)")?(?: data-id="(.*?)")?\/>/gs, "")),
+                                (i = "text/plain"),
+                                (n += ".txt");
+                            break;
+                        default:
+                            return void console.warn("Unsupported download format:", e);
+                    }
+                    const a = new Blob([s], { type: i }),
+                        r = URL.createObjectURL(a),
+                        d = document.createElement("a");
+                    (d.href = r), (d.download = n), document.body.appendChild(d), d.click(), document.body.removeChild(d), URL.revokeObjectURL(r);
+                }
+                convertHtmlToMarkdown(e) {
+                    let t = document.createElement("div");
+                    (t.innerHTML = e),
+                        t.querySelectorAll('span[style*="color"], font[color]').forEach((e) => {
+                            e.outerHTML = e.textContent;
+                        }),
+                        t.querySelectorAll(".embed-container").forEach((e) => {
+                            e.outerHTML = "";
+                        });
+                    let n = t.innerHTML;
+                    return (
+                        (n = n.replace(/<h1>(.*?)<\/h1>/g, "# $1\n")),
+                        (n = n.replace(/<h2>(.*?)<\/h2>/g, "## $1\n")),
+                        (n = n.replace(/<h3>(.*?)<\/h3>/g, "### $1\n")),
+                        (n = n.replace(/<h4>(.*?)<\/h4>/g, "#### $1\n")),
+                        (n = n.replace(/<h5>(.*?)<\/h5>/g, "##### $1\n")),
+                        (n = n.replace(/<h6>(.*?)<\/h6>/g, "###### $1\n")),
+                        (n = n.replace(/<strong>(.*?)<\/strong>/g, "**$1**")),
+                        (n = n.replace(/<b>(.*?)<\/b>/g, "**$1**")),
+                        (n = n.replace(/<em>(.*?)<\/em>/g, "*$1*")),
+                        (n = n.replace(/<i>(.*?)<\/i>/g, "*$1*")),
+                        (n = n.replace(
+                            /<blockquote>([\s\S]*?)<\/blockquote>/g,
+                            (e, t) =>
+                                t
+                                    .split("\n")
+                                    .map((e) => `> ${e.trim()}`)
+                                    .join("\n")
+                                    .trim() + "\n\n"
+                        )),
+                        (n = n.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, "```\n$1\n```\n")),
+                        (n = n.replace(/<code>(.*?)<\/code>/g, "`$1`")),
+                        (n = n.replace(/<a href="(.*?)">(.*?)<\/a>/g, "[$2]($1)")),
+                        (n = n.replace(/<ul>([\s\S]*?)<\/ul>/gs, (e, t) =>
+                            t.replace(/<li>([\s\S]*?)<\/li>/g, (e, t) => {
+                                const n = t.trim().split("\n");
+                                return (
+                                    `- ${n[0]}\n` +
+                                    n
+                                        .slice(1)
+                                        .map((e) => `  ${e}`)
+                                        .join("\n") +
+                                    "\n"
+                                );
+                            })
+                        )),
+                        (n = n.replace(/<ol>([\s\S]*?)<\/ol>/gs, (e, t) => {
+                            let n = 1;
+                            return t.replace(/<li>([\s\S]*?)<\/li>/g, (e, t) => {
+                                const s = t.trim().split("\n");
+                                return (
+                                    `${n++}. ${s[0]}\n` +
+                                    s
+                                        .slice(1)
+                                        .map((e) => `   ${e}`)
+                                        .join("\n") +
+                                    "\n"
+                                );
+                            });
+                        })),
+                        (n = n.replace(/<br\s*\/?>/g, "\n")),
+                        (n = n.replace(/\n{3,}/g, "\n\n").trim()),
+                        n
+                    );
+                }
+                toggleSearchReplaceBar(e) {
+                    "boolean" == typeof e
+                        ? e
+                            ? (this.searchReplaceBar.classList.add("open"), this.searchTermInput.focus(), this.findText())
+                            : (this.searchReplaceBar.classList.remove("open"), this.clearSearchResults())
+                        : (this.searchReplaceBar.classList.toggle("open"), this.searchReplaceBar.classList.contains("open") ? (this.searchTermInput.focus(), this.findText()) : this.clearSearchResults());
+                }
+                findText() {
+                    this.clearSearchResults();
+                    const e = this.searchTermInput.value.trim();
+                    if ("" === e) return;
+                    const t = this.editor.innerHTML,
+                        n = document.createElement("div");
+                    (n.innerHTML = t), n.querySelectorAll("iframe, .embed-overlay").forEach((e) => e.remove());
+                    const s = n.textContent;
+                    let i = [],
+                        o = 0;
+                    const a = document.createTreeWalker(n, NodeFilter.SHOW_TEXT, null, !1);
+                    let r;
+                    for (; (r = a.nextNode()); ) i.push({ node: r, start: o, end: o + r.nodeValue.length }), (o += r.nodeValue.length);
+                    const d = new RegExp(e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+                    let l;
+                    for (this.searchResults = []; null !== (l = d.exec(s)); ) this.searchResults.push({ start: l.index, end: l.index + l[0].length });
+                    this.searchResults.length > 0 ? (this.highlightSearchResults(), (this.currentSearchIndex = 0), this.scrollToSearchResult(this.currentSearchIndex)) : (this.currentSearchIndex = -1);
+                }
+                highlightSearchResults() {
+                    this.clearHighlights();
+                    const e = this.editor.innerHTML,
+                        t = document.createElement("div");
+                    (t.innerHTML = e),
+                        this.searchResults.forEach((e, n) => {
+                            const s = document.createRange();
+                            let i = 0,
+                                o = null,
+                                a = null,
+                                r = 0,
+                                d = 0;
+                            const l = document.createTreeWalker(t, NodeFilter.SHOW_TEXT);
+                            let c;
+                            for (; (c = l.nextNode()); ) {
+                                const t = c.nodeValue.length;
+                                if ((null === o && e.start >= i && e.start < i + t && ((o = c), (r = e.start - i)), null === a && e.end > i && e.end <= i + t && ((a = c), (d = e.end - i)), o && a)) break;
+                                i += t;
+                            }
+                            if (o && a)
+                                try {
+                                    s.setStart(o, r), s.setEnd(a, d);
+                                    const e = document.createElement("span");
+                                    (e.className = "highlight"), (e.dataset.searchIndex = n), s.surroundContents(e);
+                                } catch (t) {
+                                    console.warn("Could not highlight range:", t, e, o, a);
+                                }
+                        }),
+                        (this.editor.innerHTML = t.innerHTML),
+                        this.editor.normalize();
+                }
+                clearHighlights() {
+                    this.editor.querySelectorAll(".highlight").forEach((e) => {
+                        const t = e.parentNode;
+                        for (; e.firstChild; ) t.insertBefore(e.firstChild, e);
+                        t.removeChild(e), t.normalize();
+                    });
+                }
+                clearSearchResults() {
+                    this.clearHighlights(), (this.searchResults = []), (this.currentSearchIndex = -1);
+                }
+                navigateToSearchResult(e) {
+                    0 !== this.searchResults.length &&
+                        ((this.currentSearchIndex += e),
+                        this.currentSearchIndex >= this.searchResults.length ? (this.currentSearchIndex = 0) : this.currentSearchIndex < 0 && (this.currentSearchIndex = this.searchResults.length - 1),
+                        this.scrollToSearchResult(this.currentSearchIndex),
+                        this.updateActiveHighlight(this.currentSearchIndex));
+                }
+                scrollToSearchResult(e) {
+                    const t = this.editor.querySelector(`.highlight[data-search-index="${e}"]`);
+                    t && t.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+                updateActiveHighlight(e) {
+                    this.editor.querySelectorAll(".highlight").forEach((t, n) => {
+                        t.style.backgroundColor = n === e ? "rgba(255, 165, 0, 0.7)" : "rgba(255, 255, 0, 0.5)";
+                    });
+                }
+                replaceAll() {
+                    const e = this.searchTermInput.value,
+                        t = this.replaceTermInput.value;
+                    if (!e) return void this.showConfirmationModal("Please enter a term to find.");
+                    let n = this.editor.innerHTML;
+                    const s = new RegExp(e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
+                        i = document.createElement("div");
+                    i.innerHTML = n;
+                    const o = (e) => {
+                        if (e.nodeType === Node.TEXT_NODE) e.nodeValue = e.nodeValue.replace(s, t);
+                        else if (e.nodeType === Node.ELEMENT_NODE) {
+                            if ("script" === e.tagName.toLowerCase() || "style" === e.tagName.toLowerCase()) return;
+                            for (let t = 0; t < e.childNodes.length; t++) o(e.childNodes[t]);
+                        }
+                    };
+                    o(i), (this.editor.innerHTML = i.innerHTML), this.scheduleAutoSave(), this.findText(), this.showConfirmationModal(`All occurrences of "${e}" replaced with "${t}".`);
+                }
+                async importFile(e) {
+                    const t = e.target.files[0];
+                    if (!t) return;
+                    const n = new FileReader();
+                    (n.onload = async (n) => {
+                        const s = n.target.result,
+                            i = t.name.split(".").pop().toLowerCase();
+                        let o = s;
+                        if ("md" === i || "txt" === i) {
+                            let e = this.convertCustomSyntaxToHtml(s);
+                            o = this.applyMarkdownFormatting(e);
+                        } else "html" === i && (o = this.convertCustomSyntaxToHtml(s));
+                        const a = t.name.replace(/\.[^/.]+$/, ""),
+                            r = { id: Date.now(), title: a, content: o, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+                        this.drafts.unshift(r), this.loadDraft(r.id), this.renderDrafts(), this.saveDraftsToLocalStorage(), await this.showConfirmationModal(`File "${t.name}" imported successfully!`), (e.target.value = "");
+                    }),
+                        (n.onerror = async () => {
+                            await this.showConfirmationModal("Error reading file.");
+                        }),
+                        n.readAsText(t);
+                }
+                showAddEmbedModal(e = null) {
+                    if (
+                        ((this.editingEmbedId = e ? e.id : null),
+                        (this.embedModalTitle.textContent = e ? "Edit Embedded Content" : "Add Embedded Content"),
+                        (this.confirmEmbedBtn.textContent = e ? "Update Embed" : "Add Embed"),
+                        (this.embedUrlInput.value = e ? e.href : ""),
+                        (this.embedWidthInput.value = e ? e.width : "560"),
+                        (this.embedHeightInput.value = e ? e.height : "315"),
+                        (this.embedInsertionPointSelect.style.display = e ? "none" : "block"),
+                        (this.embedInsertionPointSelect.previousElementSibling.style.display = e ? "none" : "block"),
+                        (this.embedInsertionPointSelect.value = "at-cursor"),
+                        this.updateEmbedPreview(),
+                        (this.addEmbedModal.style.display = "flex"),
+                        !e)
+                    ) {
+                        const e = window.getSelection();
+                        e.rangeCount > 0 ? (this.savedRange = e.getRangeAt(0)) : (this.savedRange = null);
+                    }
+                }
+                updateEmbedPreview() {
+                    const e = this.embedUrlInput.value,
+                        t = this.embedWidthInput.value,
+                        n = this.embedHeightInput.value;
+                    this.embedPreviewArea.innerHTML = e ? `<iframe src="${e}" width="${t}" height="${n}" frameborder="0" allowfullscreen></iframe>` : "<p>Enter a URL to see a preview</p>";
+                }
+                insertEmbed(e, t, n, s) {
+                    const i = Date.now(),
+                        o = `\n                <div class="embed-container" \n                     data-href="${e}" \n                     data-width="${t}" \n                     data-height="${n}" \n                     data-id="${i}"\n                     style="${
+                            t ? `width:${t}px;` : ""
+                        }${
+                            n ? `height:${n}px;` : ""
+                        }"\n                     contenteditable="false">\n                    <div class="embed-overlay">\n                        <i class="fas fa-play-circle play-button"></i>\n                        <span>Click to view embedded content</span>\n                    </div>\n                    <div class="embed-controls">\n                        <button class="edit-embed-btn" data-id="${i}" contenteditable="false"><i class="fas fa-edit"></i> Edit</button>\n                        <button class="delete-embed-btn" data-id="${i}" contenteditable="false"><i class="fas fa-trash"></i> Delete</button>\n                    </div>\n                </div>`;
+                    this.editor.focus();
+                    const a = document.createElement("div");
+                    a.innerHTML = o.trim();
+                    const r = a.firstChild;
+                    "beginning" === s
+                        ? this.editor.prepend(r)
+                        : "end" === s
+                        ? this.editor.append(r)
+                        : this.savedRange && !this.savedRange.collapsed
+                        ? (this.savedRange.deleteContents(),
+                          this.savedRange.insertNode(r),
+                          this.savedRange.setStartAfter(r),
+                          this.savedRange.collapse(!0),
+                          window.getSelection().removeAllRanges(),
+                          window.getSelection().addRange(this.savedRange))
+                        : this.savedRange
+                        ? (this.savedRange.insertNode(r), this.savedRange.setStartAfter(r), this.savedRange.collapse(!0), window.getSelection().removeAllRanges(), window.getSelection().addRange(this.savedRange))
+                        : (this.editor.append(r), this.placeCursorAtEnd()),
+                        (this.savedRange = null),
+                        this.addEmbedListeners(),
+                        this.scheduleAutoSave();
+                }
+                updateEmbed(e, t, n, s) {
+                    const i = this.editor.querySelector(`.embed-container[data-id="${e}"]`);
+                    if (i) {
+                        (i.dataset.href = t), (i.dataset.width = n), (i.dataset.height = s), (i.style.width = n ? `${n}px` : ""), (i.style.height = s ? `${s}px` : "");
+                        const e = i.querySelector("iframe");
+                        if (e) (e.src = t), (e.width = n), (e.height = s);
+                        else {
+                            const e = i.querySelector(".embed-overlay");
+                            e && e.remove();
+                            const t = document.createElement("div");
+                            (t.className = "embed-overlay"),
+                                (t.innerHTML = '<i class="fas fa-play-circle play-button"></i><span>Click to view embedded content</span>'),
+                                i.prepend(t),
+                                t.addEventListener("click", (e) => this.handleEmbedClick(e, i));
+                        }
+                        this.scheduleAutoSave();
+                    }
+                }
+                editEmbed(e) {
+                    const t = this.editor.querySelector(`.embed-container[data-id="${e}"]`);
+                    if (t) {
+                        const n = { id: e, href: t.dataset.href, width: t.dataset.width, height: t.dataset.height };
+                        this.showAddEmbedModal(n);
+                    }
+                }
+                async deleteEmbed(e) {
+                    if (await this.showConfirmationModal("Are you sure you want to delete this embed?")) {
+                        const t = this.editor.querySelector(`.embed-container[data-id="${e}"]`);
+                        t && (t.remove(), this.scheduleAutoSave());
+                    }
+                }
+                showShareDraftModal() {
+                    const e = this.drafts.find((e) => e.id === this.currentDraftId);
+                    if (!e) return void this.showConfirmationModal("No draft selected to share.");
+                    const t = encodeURIComponent(e.content),
+                        n = `${window.location.origin}${window.location.pathname}?content=${t}`;
+                    (this.shareLinkContainer.textContent = n), (this.shareDraftModal.style.display = "flex");
+                }
+                checkUrlForSharedContent() {
+                    const e = new URLSearchParams(window.location.search).get("content");
+                    if (e) {
+                        const t = decodeURIComponent(e);
+                        this.createNewDraft(t, "Shared Draft"), window.history.replaceState({}, document.title, window.location.pathname), this.showConfirmationModal("A shared draft has been loaded. It has been added to your drafts.");
+                    }
+                }
+            }
+            document.addEventListener("DOMContentLoaded", () => {
+                new LiveMarkdownEditor();
+            });
+        </script>
+    </body>
 </html>
