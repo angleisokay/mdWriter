@@ -976,25 +976,35 @@
         <script>
             class LiveMarkdownEditor {
                 addTable(rows, columns, includeHeaders) {
-								let table = "<table>";
-								if (includeHeaders) {
-									table += "<thead><tr>";
-									for (let i = 0; i < columns; i++) {
-										table += "<th>Header " + (i + 1) + "</th>";
-									}
-									table += "</tr></thead>";
-								}
-								table += "<tbody>";
-								for (let i = 0; i < rows; i++) {
-									table += "<tr>";
-									for (let j = 0; j < columns; j++) {
-										table += "<td>Cell</td>";
-									}
-									table += "</tr>";
-								}
-								table += "</tbody></table>";
-								this.insertContentAtCursor(table);
-							 }
+		    if (rows <= 0 || columns <= 0 || isNaN(rows) || isNaN(columns)) {
+		        alert('Please enter valid numbers for rows and columns.');
+		        return;
+		    }
+		
+		    let table = '<table style="border-collapse: collapse; width: 100%; border: 1px solid black;">';
+		
+		    // Add headers if requested
+		    if (includeHeaders) {
+		        table += '<thead><tr>';
+		        for (let i = 0; i < columns; i++) {
+		            table += `<th style="border: 1px solid black; padding: 8px;">Header ${i + 1}</th>`;
+		        }
+		        table += '</tr></thead>';
+		    }
+		
+		    // Add rows and columns
+		    table += '<tbody>';
+		    for (let i = 0; i < rows; i++) {
+		        table += '<tr>';
+		        for (let j = 0; j < columns; j++) {
+		            table += `<td style="border: 1px solid black; padding: 8px;">Cell</td>`;
+		        }
+		        table += '</tr>';
+		    }
+		    table += '</tbody></table>';
+		
+		    this.insertContentAtCursor(table);
+		}
                 constructor() {
                     (this.drafts = []),
                         (this.currentDraftId = null),
