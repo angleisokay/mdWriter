@@ -1073,27 +1073,105 @@
 			    (this.cancelTableBtn = document.getElementById("cancelTableBtn")); // Cancel button
                 }
 		init() {
+		    // Ensure the modal is hidden when the page loads
+		    document.getElementById('addTableModal').style.display = 'none';
+		
 		    // Add Table button event listener
-		    document.getElementById('addTableBtn').addEventListener('click', (e) => {
-		        e.preventDefault();
-		        document.getElementById('addTableModal').style.display = 'flex';
-		    });
+		    const addTableBtn = document.getElementById('addTableBtn');
+		    if (addTableBtn) {
+		        addTableBtn.addEventListener('click', (e) => {
+		            e.preventDefault();
+		            console.log('Add Table button clicked'); // Debug log
+		            const addTableModal = document.getElementById('addTableModal');
+		            if (addTableModal) {
+		                addTableModal.style.display = 'flex'; // Show the modal
+		            }
+		        });
+		    }
 		
 		    // Cancel button for table modal
-		    document.getElementById('cancelTableBtn').addEventListener('click', () => {
-		        document.getElementById('addTableModal').style.display = 'none';
-		    });
+		    const cancelTableBtn = document.getElementById('cancelTableBtn');
+		    if (cancelTableBtn) {
+		        cancelTableBtn.addEventListener('click', () => {
+		            console.log('Cancel button clicked'); // Debug log
+		            const addTableModal = document.getElementById('addTableModal');
+		            if (addTableModal) {
+		                addTableModal.style.display = 'none'; // Hide the modal
+		            }
+		        });
+		    }
 		
 		    // Confirm table creation
-		    document.getElementById('confirmTableBtn').addEventListener('click', () => {
-		        const rows = parseInt(document.getElementById('numRows').value, 10);
-		        const cols = parseInt(document.getElementById('numColumns').value, 10);
-		        const includeHeaders = document.getElementById('includeHeaders').checked;
-		        this.addTable(rows, cols, includeHeaders);
-		        document.getElementById('addTableModal').style.display = 'none';
-		    });
+		    const confirmTableBtn = document.getElementById('confirmTableBtn');
+		    if (confirmTableBtn) {
+		        confirmTableBtn.addEventListener('click', () => {
+		            console.log('Confirm button clicked'); // Debug log
+		            const rows = parseInt(document.getElementById('numRows').value, 10);
+		            const cols = parseInt(document.getElementById('numColumns').value, 10);
+		            const includeHeaders = document.getElementById('includeHeaders').checked;
+		            this.addTable(rows, cols, includeHeaders);
+		            const addTableModal = document.getElementById('addTableModal');
+		            if (addTableModal) {
+		                addTableModal.style.display = 'none'; // Hide the modal after adding the table
+		            }
+		        });
+		    }
 		
-		    // Other initializations...
+		    // Add Embed button event listener
+		    const addEmbedBtn = document.getElementById('addEmbedBtn');
+		    if (addEmbedBtn) {
+		        addEmbedBtn.addEventListener('click', (e) => {
+		            e.preventDefault();
+		            console.log('Add Embed button clicked'); // Debug log
+		            const addEmbedModal = document.getElementById('addEmbedModal');
+		            if (addEmbedModal) {
+		                addEmbedModal.style.display = 'flex'; // Show the modal
+		            }
+		        });
+		    }
+		
+		    // Cancel button for embed modal
+		    const cancelEmbedBtn = document.getElementById('cancelEmbedBtn');
+		    if (cancelEmbedBtn) {
+		        cancelEmbedBtn.addEventListener('click', () => {
+		            console.log('Cancel Embed button clicked'); // Debug log
+		            const addEmbedModal = document.getElementById('addEmbedModal');
+		            if (addEmbedModal) {
+		                addEmbedModal.style.display = 'none'; // Hide the modal
+		            }
+		        });
+		    }
+		
+		    // Confirm Embed creation
+		    const confirmEmbedBtn = document.getElementById('confirmEmbedBtn');
+		    if (confirmEmbedBtn) {
+		        confirmEmbedBtn.addEventListener('click', () => {
+		            console.log('Confirm Embed button clicked'); // Debug log
+		            const url = document.getElementById('embedUrl').value;
+		            const width = parseInt(document.getElementById('embedWidth').value, 10);
+		            const height = parseInt(document.getElementById('embedHeight').value, 10);
+		            const insertionPoint = document.getElementById('embedInsertionPoint').value;
+		
+		            this.addEmbed(url, width, height, insertionPoint);
+		            const addEmbedModal = document.getElementById('addEmbedModal');
+		            if (addEmbedModal) {
+		                addEmbedModal.style.display = 'none'; // Hide the modal after adding the embed
+		            }
+		        });
+		    }
+		
+		    // Menu button toggle
+		    const menuBtn = document.getElementById('menuBtn');
+		    if (menuBtn) {
+		        menuBtn.addEventListener('click', () => {
+		            const menuDropdown = document.getElementById('menuDropdown');
+		            if (menuDropdown) {
+		                menuDropdown.classList.toggle('open'); // Toggle dropdown visibility
+		            }
+		        });
+		    }
+		
+		    console.log('Initialization complete'); // Debug log
 		}
 		
 		addTable(rows, columns, includeHeaders) {
