@@ -805,14 +805,15 @@
             <button class="menu-btn" id="menuBtn">
                 <i class="fas fa-ellipsis-v"></i>
             </button>
-            <div class="menu-dropdown" id="menuDropdown">
-                <button id="openSettingsBtn"><i class="fas fa-cog"></i> Open Settings</button>
-                <button id="downloadFileDropdownBtn"><i class="fas fa-download"></i> Download File</button>
-                <button id="importFileDropdownBtn"><i class="fas fa-file-import"></i> Import File</button>
-                <button id="shareDraftBtn"><i class="fas fa-share-alt"></i> Share Draft</button>
-                <button id="addEmbedBtn"><i class="fas fa-video"></i> Add Embed</button>
-                <button id="addTableBtn"><i class="fas fa-table"></i> Add Table</button>
-            </div>
+	<div class="menu-dropdown" id="menuDropdown">
+	    <button id="openSettingsBtn"><i class="fas fa-cog"></i> Open Settings</button>
+	    <button id="downloadFileDropdownBtn"><i class="fas fa-download"></i> Download File</button>
+	    <button id="importFileDropdownBtn"><i class="fas fa-file-import"></i> Import File</button>
+	    <button id="shareDraftBtn"><i class="fas fa-share-alt"></i> Share Draft</button>
+	    <button id="addEmbedBtn"><i class="fas fa-video"></i> Add Embed</button>
+	    <!-- Add Table Button -->
+	    <button id="addTableBtn"><i class="fas fa-table"></i> Add Table</button>
+	</div>
             <div class="options-panel" id="optionsPanel">
                 <div class="options-header">
                     <h3>Settings</h3>
@@ -907,10 +908,27 @@
                 </div>
             </div>
         </div>
+	<div id="addTableModal" class="modal add-table-modal">
+	    <div class="modal-content">
+	        <h3>Add Table</h3>
+	        <label for="numRows">Rows:</label>
+	        <input type="number" id="numRows" value="3" min="1" />
+	        <label for="numColumns">Columns:</label>
+	        <input type="number" id="numColumns" value="3" min="1" />
+	        <label>
+	            <input type="checkbox" id="includeHeaders" />
+	            Include Headers
+	        </label>
+	        <div class="modal-buttons">
+	            <button class="confirm-btn" id="confirmTableBtn">Add Table</button>
+	            <button class="cancel-btn" id="cancelTableBtn">Cancel</button>
+	        </div>
+	    </div>
+	</div>
         <div id="fullscreenModal" class="fullscreen-modal">
             <span class="close-fullscreen" contenteditable="false">&times;</span>
             <iframe id="fullscreenIframe" src="" frameborder="0" allowfullscreen></iframe>
-        </div>
+        </div
         <div id="addEmbedModal" class="modal add-embed-modal">
             <div class="modal-content">
                 <h3 id="embedModalTitle">Add Embedded Content</h3>
@@ -1039,7 +1057,82 @@
                         (this.shareLinkContainer = document.getElementById("shareLinkContainer")),
                         (this.copyShareLinkBtn = document.getElementById("copyShareLinkBtn")),
                         (this.closeShareModalBtn = document.getElementById("closeShareModalBtn"));
+			(this.addTableBtn = document.getElementById("addTableBtn")), // Button in the menu
+			    (this.addTableModal = document.getElementById("addTableModal")), // Modal for adding a table
+			    (this.numRowsInput = document.getElementById("numRows")), // Input for number of rows
+			    (this.numColumnsInput = document.getElementById("numColumns")), // Input for number of columns
+			    (this.includeHeadersCheckbox = document.getElementById("includeHeaders")), // Checkbox for headers
+			    (this.confirmTableBtn = document.getElementById("confirmTableBtn")), // Confirm button
+			    (this.cancelTableBtn = document.getElementById("cancelTableBtn")); // Cancel button
                 }
+		init() {
+		    // Add Table button event listener
+		    document.getElementById('addTableBtn').addEventListener('click', (e) => {
+		        e.preventDefault();
+		        document.getElementById('addTableModal').style.display = 'flex';
+		    });
+		
+		    // Cancel button for table modal
+		    document.getElementById('cancelTableBtn').addEventListener('click', () => {
+		        document.getElementById('addTableModal').style.display = 'none';
+		    });
+		
+		    // Confirm table creation
+		    document.getElementById('confirmTableBtn').addEventListener('click', () => {
+		        const rows = parseInt(document.getElementById('numRows').value, 10);
+		        const cols = parseInt(document.getElementById('numColumns').value, 10);
+		        const includeHeaders = document.getElementById('includeHeaders').checked;
+		        this.addTable(rows, cols, includeHeaders);
+		        document.getElementById('addTableModal').style.display = 'none';
+		    });
+		
+		    // Other initializations...
+		}
+		
+		addTable(rows, columns, includeHeaders) {
+		    let table = '<table border="1">';
+		    if (includeHeaders) {
+		        table += '<thead><tr>';
+		        for (let i = 0; i < columns; i++) {
+		            table += '<th>Header ' + (i + 1) + '</th>';
+		        }
+		        table += '</tr></thead>';
+		    }
+		    table += '<tbody>';
+		    for (let i = 0; i < rows; i++) {
+		        table += '<tr>';
+		        for (let j = 0; j < columns; j++) {
+		            table += '<td>Cell</td>';
+		        }
+		        table += '</tr>';
+		    }
+		    table += '</tbody></table>';
+		    this.insertContentAtCursor(table);
+		}
+		
+		insertContentAtCursor(content) {
+		    const sel = window.getSelection();
+		    if (sel.getRangeAt && sel.rangeCount) {
+		        const range = sel.getRangeAt(0);
+		        range.deleteContents();
+		        const el = document.createElement('div');
+		        el.innerHTML = content;
+		        const frag = document.createDocumentFragment();
+		        let node, lastNode;
+		        while ((node = el.firstChild)) {
+		            lastNode = frag.appendChild(node);
+		        }
+		        range.insertNode(frag);
+		        if (lastNode) {
+		            range.setStartAfter(lastNode);
+		            range.collapse(true);
+		            sel.removeAllRanges();
+		            sel.addRange(range);
+		        }
+		    } else {
+		        this.editor.innerHTML += content;
+		    }
+		}
                 bindEvents() {
                     this.menuBtn.addEventListener("click", (e) => {
                         if ((e.stopPropagation(), this.optionsPanel.classList.contains("open"))) this.optionsPanel.classList.remove("open"), (this.menuBtn.innerHTML = '<i class="fas fa-ellipsis-v"></i>');
