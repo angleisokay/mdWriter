@@ -1219,6 +1219,27 @@
 		    }
 		}
                 bindEvents() {
+		    this.addTableBtn.addEventListener('click', (e) => {
+		        e.preventDefault();
+		        console.log('Add Table button clicked'); // Debug log
+		        this.addTableModal.style.display = 'flex'; // Show the modal
+		    });
+		
+		    // Cancel button for table modal
+		    this.cancelTableBtn.addEventListener('click', () => {
+		        console.log('Cancel button clicked'); // Debug log
+		        this.addTableModal.style.display = 'none'; // Hide the modal
+		    });
+		
+		    // Confirm table creation
+		    this.confirmTableBtn.addEventListener('click', () => {
+		        console.log('Confirm button clicked'); // Debug log
+		        const rows = parseInt(this.numRowsInput.value, 10);
+		        const cols = parseInt(this.numColumnsInput.value, 10);
+		        const includeHeaders = this.includeHeadersCheckbox.checked;
+		        this.addTable(rows, cols, includeHeaders);
+		        this.addTableModal.style.display = 'none'; // Hide the modal
+		    });
                     this.menuBtn.addEventListener("click", (e) => {
                         if ((e.stopPropagation(), this.optionsPanel.classList.contains("open"))) this.optionsPanel.classList.remove("open"), (this.menuBtn.innerHTML = '<i class="fas fa-ellipsis-v"></i>');
                         else {
